@@ -1,6 +1,6 @@
 # SOC Incident Investigation – Azuki Import/Export Compromise
 
-
+<img width="600" height="800" alt="image" src="https://github.com/user-attachments/assets/03da5fec-8f9b-4395-94f7-9b2d92a777c8" />
 
 **Analyst:** Luka Groff
 

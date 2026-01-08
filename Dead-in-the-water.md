@@ -401,11 +401,11 @@ DeviceProcessEvents
 | order by TimeGenerated asc
 ```
 
-<img width="800" height="796" alt="image" src="https://github.com/user-attachments/assets/aa3f589c-379a-408c-b092-eacd668cc887" />
+<img width="600" height="796" alt="image" src="https://github.com/user-attachments/assets/aa3f589c-379a-408c-b092-eacd668cc887" />
 
-<img width="800" height="792" alt="image" src="https://github.com/user-attachments/assets/82da616d-3544-4bde-b5f8-f735221f12f5" />
+<img width="600" height="792" alt="image" src="https://github.com/user-attachments/assets/82da616d-3544-4bde-b5f8-f735221f12f5" />
 
-<img width="900" height="746" alt="image" src="https://github.com/user-attachments/assets/a144dff1-3417-4877-9544-435a2afa73b7" />
+<img width="600" height="746" alt="image" src="https://github.com/user-attachments/assets/a144dff1-3417-4877-9544-435a2afa73b7" />
 
 The threat actor executed a systematic pre-encryption impact and defense-evasion sequence consistent with ransomware-style operations. After initial execution (silentlynx.exe), they disabled Windows recovery mechanisms, terminated critical services and processes, and destroyed backup artifacts to prevent system restoration and file recovery.
 
@@ -489,7 +489,7 @@ DeviceProcessEvents
 | order by TimeGenerated asc
 ```
 
-<img width="800" height="452" alt="image" src="https://github.com/user-attachments/assets/ee0ebfa0-1acb-42af-9a40-52071124604d" />
+<img width="650" height="452" alt="image" src="https://github.com/user-attachments/assets/ee0ebfa0-1acb-42af-9a40-52071124604d" />
 
 The threat actor deleted important files, NTFS USN Change Journal on drive C:, erasing file system change history to hinder forensic analysis and recovery.
 
@@ -510,6 +510,6 @@ DeviceFileEvents
 | order by TimeGenerated asc
 ```
 
-<img width="800" height="286" alt="image" src="https://github.com/user-attachments/assets/ae6d4233-3946-47fe-b2df-5ebaaf284321" />
+<img width="650" height="286" alt="image" src="https://github.com/user-attachments/assets/ae6d4233-3946-47fe-b2df-5ebaaf284321" />
 
 The threat actor left a random note for the victim to see and follow the instructions on it to possibly pay the fee to decrypt the files.

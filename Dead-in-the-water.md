@@ -6,7 +6,7 @@
 
 **Source:** Cyber Range SOC Challenge
 
-**System:** azuki-adminpc
+**System:** azuki-adminpc & azuki-backupsv
 
 ---
 

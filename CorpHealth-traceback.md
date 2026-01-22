@@ -1,5 +1,8 @@
 # Cyber Range Threat Hunt - CorpHealth: Traceback
 
+<img width="740" height="740" alt="image" src="https://github.com/user-attachments/assets/a4acfe65-91b9-4ba9-addd-e092491df441" />
+
+
 **Date of Incident:** 23 November 2025  
 **Data Source:** Log Analytics workspaces  
 **Scope:** Windows endpoint, CorpHealth workstation

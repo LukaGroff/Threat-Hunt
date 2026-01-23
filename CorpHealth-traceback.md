@@ -525,138 +525,218 @@ DeviceFileEvents
 
 **KQL:****
 ```kql
-let AzukiDevices = dynamic(["azuki-adminpc","azuki-fileserver","azuki-logisticspc","azuki-backup"]);
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where FileName in~ ("wbadmin.exe","cmd.exe")
-| where ProcessCommandLine == '"wbadmin" delete catalog -quiet'
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
+DeviceNetworkEvents
+| where DeviceName contains "ch-ops-wks02"
+| where InitiatingProcessRemoteSessionDeviceName != ""
+| project TimeGenerated, ActionType, InitiatingProcessRemoteSessionDeviceName,InitiatingProcessAccountName, InitiatingProcessCommandLine, RemoteIP, RemotePort
 | order by TimeGenerated asc
 ```
-
+<img width="900" height="684" alt="image" src="https://github.com/user-attachments/assets/aff5aecd-cfcd-4872-9d6f-9edf1f2a6b8c" />
 
 
 ---
 
-## PHASE 4 – Persistence (FLAGS 23–24)
+### FLAG 22 – Remote Session IP
+**Finding:** The attacker consistently accessed the host from a CGNAT relay address.
 
-### FLAG 23 – Registry Autorun
-**Finding:** A Run-key style autorun value masqueraded as a Windows security component to persist across reboots.
-
-**Registry Value Name:**
+**Remote Session IP:**
 ```
-WindowsSecurityHealth
+100.64.100.6
 ```
 
-**MITRE:** T1547.001 – Registry Run Keys / Startup Folder
+**MITRE:** T1021 – Remote Services
 
 **KQL (tight: only Run/RunOnce + value name):**
 ```kql
-let AzukiDevices = dynamic(["azuki-adminpc","azuki-fileserver","azuki-logisticspc","azuki-backup"]);
-DeviceRegistryEvents
-| where DeviceName in~ (AzukiDevices)
-| where ActionType == "RegistryValueSet"
-| where RegistryKey has_any (
-    "\Software\Microsoft\Windows\CurrentVersion\Run",
-    "\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-)
-| where RegistryValueName == "WindowsSecurityHealth"
-| project TimeGenerated, DeviceName, RegistryKey, RegistryValueName, RegistryValueData,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
+DeviceNetworkEvents
+| where DeviceName contains "ch-ops-wks02"
+| where InitiatingProcessRemoteSessionDeviceName == "对手"
+| where InitiatingProcessRemoteSessionIP !startswith "10."
+| project TimeGenerated, ActionType, InitiatingProcessRemoteSessionDeviceName,InitiatingProcessRemoteSessionIP, InitiatingProcessAccountName, InitiatingProcessCommandLine, RemoteIP, RemotePort
 | order by TimeGenerated asc
 ```
+<img width="900" height="472" alt="image" src="https://github.com/user-attachments/assets/e6c5eae3-0561-412c-bf3d-2bfc7bc1cc43" />
+
 
 ---
 
-### FLAG 24 – Scheduled Task Persistence
-**Finding:** A scheduled task was created to ensure the ransomware (or helper component) re-executes reliably.
+### FLAG 23 – Internal Pivot Host
+**Finding:** Telemetry revealed an internal Azure IP used as a pivot during remote sessions.
 
-**Task Path:**
+**Internal Pivot IP:**
 ```
-\Microsoft\Windows\Security\SecurityHealthService
+10.168.0.6
 ```
 
-**MITRE:** T1053.005 – Scheduled Task/Job
+**MITRE:** T1021.001 – Remote Desktop Protocol
+
+**KQL:**
+```kql
+DeviceNetworkEvents
+| where DeviceName contains "ch-ops-wks02"
+| where InitiatingProcessRemoteSessionDeviceName == "对手"
+| where InitiatingProcessRemoteSessionIP !startswith "100.64"
+| project TimeGenerated, ActionType, InitiatingProcessRemoteSessionDeviceName,InitiatingProcessRemoteSessionIP, InitiatingProcessAccountName, InitiatingProcessCommandLine, RemoteIP, RemotePort
+| order by TimeGenerated asc
+```
+<img width="900" height="408" alt="image" src="https://github.com/user-attachments/assets/1b662c8e-44a3-43a3-b11b-ecf3cf613af4" />
+
+---
+
+### FLAG 24 – First Suspicious Logon
+**Finding:** The earliest confirmed malicious logon marks the start of the intrusion.
+
+**Timestamp Identified:**
+```
+2025-11-23T03:08:31.1849379Z
+```
+
+**MITRE:** T1078 – Valid Accounts
+
+**KQL:**
+```kql
+DeviceLogonEvents
+| where DeviceName contains "ch-ops-wks02"
+| where ActionType contains "success"
+| where RemoteIP != ""
+| project TimeGenerated, ActionType, AccountDomain, AccountName, DeviceName, InitiatingProcessCommandLine, LogonType, RemoteIP
+| order by TimeGenerated asc
+```
+<img width="800" height="406" alt="image" src="https://github.com/user-attachments/assets/19d5010d-3d1e-44ec-8a47-39af3c8ce4b7" />
+
+---
+
+### FLAG 25 – Initial Logon Source IP
+**Finding:** The first logon originated from an external public IP.
+
+**Source IP:**
+```
+104.164.168.17
+```
+
+**MITRE:** T1078 – Valid Accounts
+
+**KQL:**
+KQL and the answer can be seen from flag 24.
+
+---
+
+### FLAG 26 – Compromised Account
+**Finding:** A privileged local account was used for the initial access
+
+**Account Name:**
+```
+chadmin
+```
+
+**MITRE:** T1078 – Valid Accounts
+
+**KQL:**
+KQL and the answer can be seen in flag 24.
+
+---
+
+### FLAG 27 – Attacker Geographic Region
+**Finding:** IP enrichment revealed a consistent geographic origin.
+
+**Region Identified:**
+```
+Vietnam
+```
+
+**MITRE:** T1598 – Network Information Discovery
+
+**KQL:**
+KQL can be seen in flag 24. The location of the IP was found on the website IPlocation.net
+
+---
+
+### FLAG 28 – First Process After Logon
+**Finding:** The attacker initiated an interactive desktop session immediately after login.
+
+**Process Name:**
+```
+explorer.exe
+```
+
+**MITRE:** T1059 – Command and Scripting Interpreter
 
 **KQL:**
 ```kql
 DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where FileName =~ "schtasks.exe" or ProcessCommandLine has "schtasks"
-| where ProcessCommandLine has_any ("/create","/Create")
-| where ProcessCommandLine has "SecurityHealthService"
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+| where AccountDomain contains "ch-ops-wks02"
+| where InitiatingProcessAccountName contains "chadmin"
+| project TimeGenerated, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessCommandLine, FolderPath
 | order by TimeGenerated asc
 ```
+<img width="900" height="292" alt="image" src="https://github.com/user-attachments/assets/410cd182-b767-49b2-886a-c7a9620680af" />
 
-**KQL (registry pivot confirming the full task path):**
-```kql
-DeviceRegistryEvents
-| where DeviceName in~ (AzukiDevices)
-| where RegistryKey has "\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree"
-| where RegistryKey has "\Microsoft\Windows\Security\SecurityHealthService"
-| project TimeGenerated, DeviceName, ActionType, RegistryKey, InitiatingProcessFileName, InitiatingProcessCommandLine
-| order by TimeGenerated asc
-```
 
 ---
 
-## PHASE 5 – Anti‑Forensics (FLAG 25)
+### FLAG 29 – First File Accessed
+**Finding:** The attacker accessed a file containing credential-related information.
 
-### FLAG 25 – Journal Deletion
-**Finding:** The NTFS USN Journal was deleted to remove forensic artifacts that track file system changes.
-
-**Command:**
+**File Name:**
 ```
-"fsutil.exe" usn deletejournal /D C:
+user-pass.txt
 ```
 
-**MITRE:** T1070.004 – Indicator Removal on Host (File Deletion)
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where ProcessCommandLine has_all ("fsutil","usn","deletejournal")
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
-| order by TimeGenerated asc
-```
-
----
-
-## PHASE 6 – Ransomware Success (FLAG 26)
-
-### FLAG 26 – Ransom Note
-**Finding:** Ransom note artifacts confirm successful encryption and provide attacker instructions.
-
-**Filename:**
-```
-SILENTLYNX_README.txt
-```
-
-**MITRE:** T1486 – Data Encrypted for Impact
+**MITRE:** T1552.001 – Credentials in Files
 
 **KQL:**
 ```kql
 DeviceFileEvents
-| where DeviceName in~ (AzukiDevices)
-| where FileName == "SILENTLYNX_README.txt"
-| project TimeGenerated, DeviceName, ActionType, FolderPath, FileName,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
+| where InitiatingProcessId == "5732"
+| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessCommandLine, InitiatingProcessAccountName, DeviceName
+| order by TimeGenerated asc
+```
+<img width="900" height="560" alt="image" src="https://github.com/user-attachments/assets/b22c71db-9359-4d08-ae90-f69579a598bc" />
+
+---
+
+### FLAG 30 – Post-Credential Action
+**Finding:** The attacker executed a network configuration command following credential access.
+
+**Action Identified:**
+```
+ipconfig.exe
+```
+
+**MITRE:** T1082 – System Information Discovery
+
+**KQL:**
+```kql
+DeviceProcessEvents
+| where DeviceName contains "ch-ops-wks02"
+| where AccountName contains "chadmin"
+| project TimeGenerated, AccountName, DeviceName, ProcessCommandLine, FileName, InitiatingProcessFileName, InitiatingProcessCommandLine
 | order by TimeGenerated asc
 ```
 
----
+<img width="900" height="464" alt="image" src="https://github.com/user-attachments/assets/c3242cb3-42f7-4bfe-be96-583ed4004d22" />
 
-## Conclusion
-This incident demonstrates a **methodical, multi‑stage ransomware operation** with deliberate focus on:
-- Backup and recovery destruction **before** encryption
-- Rapid lateral deployment via admin tooling
-- Persistent access and anti‑forensic cleanup
-
-The attacker achieved full operational impact with minimal resistance, underscoring gaps in backup isolation, credential hygiene, and endpoint monitoring.
 
 ---
 
-*Prepared as a SOC investigation walkthrough and portfolio‑ready incident report.*
+### FLAG 31 – Next Account Accessed
+**Finding:** The attacker pivoted to a secondary operational account after reconnaissance.
+
+**Account Name:**
+```
+ops.maintenance
+```
+
+**MITRE:** T1078 – Valid Accounts
+
+**KQL:**
+```kql
+DeviceLogonEvents
+| where DeviceName contains "ch-ops-wks02"
+| where ActionType contains "success"
+| where RemoteIP != ""
+| project TimeGenerated, ActionType, AccountDomain, AccountName, DeviceName, InitiatingProcessCommandLine, LogonType, RemoteIP
+| order by TimeGenerated asc
+```
+<img width="900" height="552" alt="image" src="https://github.com/user-attachments/assets/efc7ea07-d22e-4a6f-9348-321e3c86faac" />
+

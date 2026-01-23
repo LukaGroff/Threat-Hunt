@@ -16,8 +16,6 @@ Between 23 November and 30 November 2025, a workstation (CH-OPS-WKS02) was acces
 - **MITRE ATT&CK mapping**
 - **Representative KQL used to identify the activity**
 
-This format is suitable both as a **GitHub README** and as the narrative core of a **PDF-style SOC incident report**.
-
 ---
 
 ## Attack Timeline & Key Findings

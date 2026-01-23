@@ -601,7 +601,7 @@ DeviceLogonEvents
 | project TimeGenerated, ActionType, AccountDomain, AccountName, DeviceName, InitiatingProcessCommandLine, LogonType, RemoteIP
 | order by TimeGenerated asc
 ```
-<img width="800" height="406" alt="image" src="https://github.com/user-attachments/assets/19d5010d-3d1e-44ec-8a47-39af3c8ce4b7" />
+<img width="600" height="406" alt="image" src="https://github.com/user-attachments/assets/19d5010d-3d1e-44ec-8a47-39af3c8ce4b7" />
 
 ---
 

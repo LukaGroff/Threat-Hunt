@@ -6,6 +6,7 @@
 **Date of Incident:** 23 November 2025  
 **Data Source:** Log Analytics workspaces  
 **Scope:** Windows endpoint, CorpHealth workstation
+**Analyst:** Luka Groff
 
 ---
 

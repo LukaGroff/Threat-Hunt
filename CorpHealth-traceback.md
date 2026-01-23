@@ -398,7 +398,7 @@ S-1-5-21-1605642021-30596605-784192815-1000
 
 **MITRE:** T1134 – Access Token Manipulation
 
-**KQL:****
+**KQL:**
 same kql as flag 14, SID can also be seen from the picture provided
 
 ---
@@ -413,7 +413,7 @@ revshell.exe
 
 **MITRE:** T1105 – Ingress Tool Transfer
 
-**KQL (tight + time pivot around payload):**
+**KQL**
 ```kql
 DeviceFileEvents
 | where DeviceName contains "ch-ops-wks02"
@@ -438,8 +438,8 @@ https://unresuscitating-donnette-smothery.ngrok-free.dev
 
 **MITRE:** T1105 – Ingress Tool Transfer
 
-**KQL:****
-kql and answer can be seen in flag 16
+**KQL:**
+KQL and answer can be seen in flag 16
 
 ---
 
@@ -453,7 +453,7 @@ explorer.exe
 
 **MITRE:** T1204.002 – User Execution
 
-**KQL:****
+**KQL:**
 ```kql
 DeviceProcessEvents
 | where DeviceName contains "ch-ops-wks02"
@@ -476,7 +476,7 @@ DeviceProcessEvents
 
 **MITRE:** T1071 – Application Layer Protocol
 
-**KQL (tight + command equality):**
+**KQL:**
 ```kql
 DeviceNetworkEvents
 | where DeviceName contains "ch-ops-wks02"
@@ -499,7 +499,7 @@ C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\revshell.exe
 
 **MITRE:** T1547.001 – Startup Folder
 
-**KQL:****
+**KQL:**
 ```kql
 DeviceFileEvents
 | where DeviceName contains "ch-ops-wks02"
@@ -522,7 +522,7 @@ DeviceFileEvents
 
 **MITRE:** T1021 – Remote Services
 
-**KQL:****
+**KQL:**
 ```kql
 DeviceNetworkEvents
 | where DeviceName contains "ch-ops-wks02"
@@ -545,7 +545,7 @@ DeviceNetworkEvents
 
 **MITRE:** T1021 – Remote Services
 
-**KQL (tight: only Run/RunOnce + value name):**
+**KQL:**
 ```kql
 DeviceNetworkEvents
 | where DeviceName contains "ch-ops-wks02"

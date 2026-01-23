@@ -461,7 +461,7 @@ DeviceProcessEvents
 | project TimeGenerated, AccountName, DeviceName, ProcessCommandLine, FileName, InitiatingProcessFileName, InitiatingProcessCommandLine
 | order by TimeGenerated asc
 ```
-<img width="900" height="400" alt="image" src="https://github.com/user-attachments/assets/6961adbd-375c-4a78-af63-5ebe9f5f70e5" />
+<img width="650" height="400" alt="image" src="https://github.com/user-attachments/assets/6961adbd-375c-4a78-af63-5ebe9f5f70e5" />
 
 
 ---
@@ -484,7 +484,7 @@ DeviceNetworkEvents
 | project TimeGenerated, ActionType, InitiatingProcessAccountName, InitiatingProcessCommandLine, RemoteIP, RemotePort
 | order by TimeGenerated asc
 ```
-<img width="900" height="348" alt="image" src="https://github.com/user-attachments/assets/5d452712-8882-4bd9-b09a-aa51b4b1f8fe" />
+<img width="650" height="348" alt="image" src="https://github.com/user-attachments/assets/5d452712-8882-4bd9-b09a-aa51b4b1f8fe" />
 
 
 ---
@@ -507,7 +507,7 @@ DeviceFileEvents
 | where FileName contains "revshell.exe"
 | project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessAccountName, PreviousFileName
 ```
-<img width="900" height="346" alt="image" src="https://github.com/user-attachments/assets/2294f26b-783c-4e0f-86e3-984bfaa41333" />
+<img width="800" height="346" alt="image" src="https://github.com/user-attachments/assets/2294f26b-783c-4e0f-86e3-984bfaa41333" />
 
 
 ---

@@ -296,246 +296,232 @@ DeviceRegistryEvents
 
 ---
 
-### FLAG 12 – Backup Service Disabled
-**Finding:** The attacker disabled cron to prevent scheduled jobs from starting on boot (persistent).
+### FLAG 11 – Privilege Escalation Event
+**Finding:** A configuration adjustment event indicated simulated privilege escalation activity.
 
-**Command:**
+**Timestamp Identified:**
 ```
-systemctl disable cron
+2025-11-23T03:47:21.8529749Z
 ```
 
-**MITRE:** T1489 – Service Stop
+**MITRE:** T1068 – Exploitation for Privilege Escalation
+
+**KQL:**
+```kql
+DeviceEvents
+| where DeviceName contains "ch-ops-wks02"
+| where AdditionalFields contains "configadjust"
+| project TimeGenerated, AdditionalFields, DeviceName, InitiatingProcessAccountName, InitiatingProcessAccountSid,InitiatingProcessCommandLine
+| order by TimeGenerated asc
+```
+<img width="900" height="350" alt="image" src="https://github.com/user-attachments/assets/d6e53147-e8e6-4622-97a5-fa51f724dd04" />
+
+---
+
+### FLAG 12 – AV Exclusion Attempt
+**Finding:** The attacker attempted to exclude a staging directory from Windows Defender scanning.
+
+**Exclusion Path:**
+```
+C:\ProgramData\Corp\Ops\staging
+```
+
+**MITRE:** T1562.001 – Disable or Modify Tools
 
 **KQL:**
 ```kql
 DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where AccountName == "backup-admin"
-| where ProcessCommandLine == "systemctl disable cron"
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+| where AccountDomain contains "ch-ops-wks02"
+| where ProcessCommandLine contains "Add-MpPreference"
+| project TimeGenerated, AccountDomain,AccountName, FileName, ProcessCommandLine, InitiatingProcessCommandLine, FolderPath
 | order by TimeGenerated asc
 ```
+<img width="900" height="396" alt="image" src="https://github.com/user-attachments/assets/7dbfaeb0-0612-46fe-b9c3-6f2661fe41c4" />
 
 ---
 
-## PHASE 2 – Windows Ransomware Deployment (FLAGS 13–15)
+### FLAG 13 – Encoded PowerShell Execution
+**Finding:** PowerShell executed a Base64-encoded command used for token verification.
 
-### FLAG 13 – Remote Execution Tool
-**Finding:** PsExec was used for lateral command execution over admin shares.
-
-**Tool:**
+**Decoded Command:**
 ```
-PsExec64.exe
+Write-Output 'token-6D5E4EE08227'
 ```
 
-**MITRE:** T1021.002 – SMB / Windows Admin Shares
+**MITRE:** T1027 – Obfuscated / Encrypted Command
 
 **KQL:**
 ```kql
 DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where FileName =~ "PsExec64.exe" or ProcessCommandLine has "PsExec64.exe"
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessFileName
+| where AccountDomain contains "ch-ops-wks02"
+| where ProcessCommandLine contains "encoded"
+| project TimeGenerated, AccountDomain,AccountName, FileName, ProcessCommandLine, InitiatingProcessCommandLine, FolderPath
+| extend Enc = extract(@"-EncodedCommand\s+([A-Za-z0-9+/=]+)", 1, ProcessCommandLine)
+| extend Decoded = base64_decode_tostring(Enc)
 | order by TimeGenerated asc
 ```
 
+<img width="900" height="508" alt="image" src="https://github.com/user-attachments/assets/9acb5269-f475-4fbe-a015-0206ffe65eb0" />
+
 ---
 
-### FLAG 14 – Deployment Command
-**Finding:** The attacker used PsExec to copy and execute the ransomware payload on remote systems.
+### FLAG 14 – Privilege Token Modification
+**Finding:** A process modified its primary token privileges, indicating privilege escalation behavior.
 
-**Command (password redacted):**
+**InitiatingProcessId:**
 ```
-"PsExec64.exe" \10.1.0.102 -u kenji.sato -p ********** -c -f C:\Windows\Temp\cache\silentlynx.exe
+4888
 ```
 
-**MITRE:** T1021.002 – SMB / Windows Admin Shares
+**MITRE:** T1134 – Access Token Manipulation
 
 **KQL:**
 ```kql
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where FileName =~ "PsExec64.exe" or ProcessCommandLine has "PsExec64.exe"
-| where ProcessCommandLine has "\\10.1.0.102" and ProcessCommandLine has "silentlynx.exe"
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+DeviceEvents
+| where DeviceName contains "ch-ops-wks02"
+| where AdditionalFields contains "tokenChangeDescription" or AdditionalFields contains "Privileges were added"
+| where InitiatingProcessCommandLine contains "MaintenanceRunner_Distributed.ps1"
+| project TimeGenerated, InitiatingProcessId, InitiatingProcessAccountSid, AdditionalFields, DeviceName, InitiatingProcessAccountName,InitiatingProcessCommandLine
 | order by TimeGenerated asc
 ```
+<img width="900" height="402" alt="image" src="https://github.com/user-attachments/assets/13506ffe-6963-4110-84ea-31011b6eb78f" />
+
 
 ---
 
-### FLAG 15 – Malicious Payload
-**Finding:** The ransomware binary name was identified for environment-wide hunting.
+### FLAG 15 – Modified Token Identity
+**Finding:** The modified token belonged to a local user SID rather than a system service account.
 
-**Payload:**
+**User SID:**
 ```
-silentlynx.exe
-```
-
-**MITRE:** T1204.002 – User Execution (Malicious File)
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where FileName =~ "silentlynx.exe" or ProcessCommandLine has "silentlynx.exe"
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessFileName
-| order by TimeGenerated asc
+S-1-5-21-1605642021-30596605-784192815-1000
 ```
 
----
-
-## PHASE 3 – Recovery Inhibition (FLAGS 16–22)
-
-### FLAG 16 – Shadow Service Stopped
-**Finding:** The ransomware stopped the Volume Shadow Copy Service to prevent snapshot-based recovery during encryption.
-
-**Command:**
-```
-"net" stop VSS /y
-```
-
-**MITRE:** T1490 – Inhibit System Recovery
+**MITRE:** T1134 – Access Token Manipulation
 
 **KQL:****
-```kql
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where ProcessCommandLine == '"net" stop VSS /y'
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
-| order by TimeGenerated asc
-```
+same kql as flag 14, SID can also be seen from the picture provided
 
 ---
 
-### FLAG 17 – Backup Engine Stopped
-**Finding:** Windows Backup Engine was stopped to halt backup operations and dependent services.
+### FLAG 16 – Ingress Tool Transfer
+**Finding:** An unsigned executable was written to disk following external network activity.
 
-**Command:**
+**Executable Name:**
 ```
-"net" stop wbengine /y
+revshell.exe
 ```
 
-**MITRE:** T1490 – Inhibit System Recovery
+**MITRE:** T1105 – Ingress Tool Transfer
 
 **KQL (tight + time pivot around payload):**
 ```kql
-let AzukiDevices = dynamic(["azuki-adminpc","azuki-fileserver","azuki-logisticspc","azuki-backup"]);
-let AnchorTime = toscalar(
-    DeviceProcessEvents
-    | where DeviceName in~ (AzukiDevices)
-    | where ProcessCommandLine has "silentlynx.exe"
-    | summarize max(TimeGenerated)
-);
-let Win = 45m;
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where TimeGenerated between (AnchorTime-Win .. AnchorTime+Win)
-| where ProcessCommandLine == '"net" stop wbengine /y'
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+DeviceFileEvents
+| where DeviceName contains "ch-ops-wks02"
+| where FileName contains ".exe"
+| where ActionType contains "filecreated"
+| where InitiatingProcessCommandLine contains "curl"
+| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessCommandLine, InitiatingProcessAccountName, DeviceName
 | order by TimeGenerated asc
 ```
+<img width="900" height="394" alt="image" src="https://github.com/user-attachments/assets/ab609fec-3f75-4696-ba53-aab767039f6f" />
+
 
 ---
 
-### FLAG 18 – Process Termination (Unlock Files)
-**Finding:** Database services were forcefully terminated to release file locks prior to encryption.
+### FLAG 17 – External Download Source
+**Finding:** The payload was retrieved via a dynamic tunneling service using curl.
 
-**Command:**
+**Download URL:**
 ```
-"taskkill" /F /IM sqlservr.exe
+https://unresuscitating-donnette-smothery.ngrok-free.dev
 ```
 
-**MITRE:** T1562.001 – Impair Defenses (Disable or Modify Tools)
+**MITRE:** T1105 – Ingress Tool Transfer
+
+**KQL:****
+kql and answer can be seen in flag 16
+
+---
+
+### FLAG 18 – Execution of Staged Binary
+**Finding:** The downloaded binary was executed via a Windows shell process, simulating user interaction.
+
+**Executing Process:**
+```
+explorer.exe
+```
+
+**MITRE:** T1204.002 – User Execution
 
 **KQL:****
 ```kql
-let AzukiDevices = dynamic(["azuki-adminpc","azuki-fileserver","azuki-logisticspc","azuki-backup"]);
 DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where ProcessCommandLine == '"taskkill" /F /IM sqlservr.exe'
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine,
-          InitiatingProcessFileName, InitiatingProcessCommandLine
+| where DeviceName contains "ch-ops-wks02"
+| where AccountName contains "chadmin"
+| project TimeGenerated, AccountName, DeviceName, ProcessCommandLine, FileName, InitiatingProcessFileName, InitiatingProcessCommandLine
 | order by TimeGenerated asc
 ```
+<img width="900" height="400" alt="image" src="https://github.com/user-attachments/assets/6961adbd-375c-4a78-af63-5ebe9f5f70e5" />
+
 
 ---
 
-### FLAG 19 – Recovery Point Deletion
-**Finding:** All existing shadow copies were deleted to remove local restore points.
+### FLAG 19 – External IP Contacted
+**Finding:** The reverse shell attempted outbound communication to a non-standard external IP and port.
 
-**Command:**
+**External IP:**
 ```
-"vssadmin" delete shadows /all /quiet
-```
-
-**MITRE:** T1490 – Inhibit System Recovery
-
-**KQL:****
-```kql
-let AzukiDevices = dynamic(["azuki-adminpc","azuki-fileserver","azuki-logisticspc","azuki-backup"]);
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where ProcessCommandLine == '"vssadmin" delete shadows /all /quiet'
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
-| order by TimeGenerated asc
+13.228.171.119
 ```
 
----
-
-### FLAG 20 – Storage Limitation
-**Finding:** Shadow storage was resized to prevent creation of new recovery points.
-
-**Command:**
-```
-"vssadmin" resize shadowstorage /for=C: /on=C: /maxsize=401MB
-```
-
-**MITRE:** T1490 – Inhibit System Recovery
+**MITRE:** T1071 – Application Layer Protocol
 
 **KQL (tight + command equality):**
 ```kql
-let AzukiDevices = dynamic(["azuki-adminpc","azuki-fileserver","azuki-logisticspc","azuki-backup"]);
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where ProcessCommandLine == '"vssadmin" resize shadowstorage /for=C: /on=C: /maxsize=401MB'
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+DeviceNetworkEvents
+| where DeviceName contains "ch-ops-wks02"
+| where RemotePort == "11746"
+| project TimeGenerated, ActionType, InitiatingProcessAccountName, InitiatingProcessCommandLine, RemoteIP, RemotePort
 | order by TimeGenerated asc
 ```
+<img width="900" height="348" alt="image" src="https://github.com/user-attachments/assets/5d452712-8882-4bd9-b09a-aa51b4b1f8fe" />
+
 
 ---
 
-### FLAG 21 – Recovery Disabled
-**Finding:** Windows recovery features were disabled to block automatic repair after system corruption.
+### FLAG 20 – Startup Folder Persistence
+**Finding:** The attacker copied the executable into a Startup directory to ensure execution on login.
 
-**Command:**
+**Persistence Path:**
 ```
-"bcdedit" /set {default} recoveryenabled No
+C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\revshell.exe
 ```
 
-**MITRE:** T1490 – Inhibit System Recovery
+**MITRE:** T1547.001 – Startup Folder
 
 **KQL:****
 ```kql
-let AzukiDevices = dynamic(["azuki-adminpc","azuki-fileserver","azuki-logisticspc","azuki-backup"]);
-DeviceProcessEvents
-| where DeviceName in~ (AzukiDevices)
-| where FileName in~ ("bcdedit.exe","cmd.exe")
-| where ProcessCommandLine == '"bcdedit" /set {default} recoveryenabled No'
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
-| order by TimeGenerated asc
+DeviceFileEvents
+| where DeviceName contains "ch-ops-wks02"
+| where FolderPath contains "start" or FolderPath contains "c:\\programdata"
+| where FileName contains "revshell.exe"
+| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessAccountName, PreviousFileName
 ```
+<img width="900" height="346" alt="image" src="https://github.com/user-attachments/assets/2294f26b-783c-4e0f-86e3-984bfaa41333" />
+
 
 ---
 
-### FLAG 22 – Catalog Deletion
-**Finding:** The Windows Backup catalog was deleted, making backups undiscoverable even if files remained.
+### FLAG 21 – Remote Session Source Device
+**Finding:** Multiple malicious actions shared a consistent remote session identifier.
 
-**Command:**
+**Remote Session Device Name:**
 ```
-"wbadmin" delete catalog -quiet
+对手
 ```
 
-**MITRE:** T1490 – Inhibit System Recovery
+**MITRE:** T1021 – Remote Services
 
 **KQL:****
 ```kql

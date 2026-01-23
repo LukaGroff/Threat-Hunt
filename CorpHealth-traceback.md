@@ -66,7 +66,7 @@ Between 23 November and 30 November 2025, a workstation (CH-OPS-WKS02) was acces
 ### FLAG 0 – Identify the Device
 **Finding:** Unusual off-hours operational telemetry was isolated to a single workstation.
 
-**CDevice Identified:**
+**Device Identified:**
 ```
 ch-ops-wks02
 ```

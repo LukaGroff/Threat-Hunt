@@ -291,7 +291,7 @@ DeviceRegistryEvents
 | project TimeGenerated, ActionType, InitiatingProcessCommandLine, InitiatingProcessFileName, InitiatingProcessFolderPath, PreviousRegistryKey, PreviousRegistryValueName, RegistryKey, RegistryValueName, RegistryValueData
 | order by TimeGenerated asc
 ```
-<img width="800" height="518" alt="image" src="https://github.com/user-attachments/assets/4a0afbce-7795-4757-a305-441c6f8d31fd" />
+<img width="1000" height="518" alt="image" src="https://github.com/user-attachments/assets/4a0afbce-7795-4757-a305-441c6f8d31fd" />
 
 ---
 

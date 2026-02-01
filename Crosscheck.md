@@ -6,6 +6,8 @@
 **Date of Incident:** 1 December 2025  
 **Data Source:** Log Analytics workspaces  
 **Scope:** Two Windows endpoints
+
+
 **Analyst:** Luka Groff
 
 ---

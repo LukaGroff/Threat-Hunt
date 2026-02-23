@@ -179,10 +179,13 @@ DeviceProcessEvents
 ```
 **Alert**: an alert was triggered, "Suspicious executable with multiple file extensions", which clearly shows Daniel_Richardson_CV.pdf.exe
 was the root cause of the infection.
-<img width="600" height="1012" alt="image" src="https://github.com/user-attachments/assets/ccd5aeeb-11e2-4ef1-8984-081d13896e96" />
+
+<img width="400" height="1012" alt="image" src="https://github.com/user-attachments/assets/ccd5aeeb-11e2-4ef1-8984-081d13896e96" />
 
 **Logs**
+
 <img width="800" height="784" alt="image" src="https://github.com/user-attachments/assets/ec023980-10e1-4f72-984e-825825719b4e" />
+
 <img width="800" height="790" alt="image" src="https://github.com/user-attachments/assets/4ad4ab8e-faaa-46fc-873e-54edf407509b" />
 
 As can be seen from the logs, Daniel_Richardson_CV.pdf.exe was responsible for several malicious activities, which answer many questions.

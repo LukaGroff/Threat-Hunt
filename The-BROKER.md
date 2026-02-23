@@ -763,8 +763,89 @@ svc_backup
 BACS_Payments_Dec2025.ods
 ```
 
-Command used: `"soffice.exe" -o "\\AS-SRV\Payroll\BACS_Payments_Dec2025.ods"` **The answer can be seen in Flag 28**
+Command used: `"soffice.exe" -o "\\AS-SRV\Payroll\BACS_Payments_Dec2025.ods"` **The answer can be seen in Flag 26 & 28**
 
 **MITRE:** T1213 – Data from Information Repositories
+
+---
+
+### FLAG 33 – Evidence of Document Modification
+**Finding:** A temporary lock file was created alongside the sensitive spreadsheet, confirming the document was opened in edit mode rather than merely viewed.
+
+**Artifact Identified:**
+```
+.~lock.BACS_Payments_Dec2025.ods#
+```
+
+**MITRE:** T1074.001 – Data Staged: Local Data Staging
+
+**KQL:**
+```kql
+DeviceFileEvents
+| where DeviceName contains "as-srv"
+| where FileName contains "BACS"
+| project TimeGenerated, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessAccountDomain ,FileName, FolderPath, InitiatingProcessCommandLine, PreviousFileName, PreviousFolderPath, SHA256
+```
+
+<img width="650" height="698" alt="image" src="https://github.com/user-attachments/assets/e5380ee5-cdc5-4905-8932-fb4203ef730d" />
+
+---
+
+### FLAG 34 – Workstation Origin of Data Access
+**Finding:** File access telemetry confirms that the sensitive spreadsheet was opened from a specific workstation, identifying the source system involved in the data access activity.
+
+**Hostname Identified:**
+```
+as-pc2
+```
+
+**MITRE:** T1021 – Remote Services
+
+---
+
+### FLAG 35 – Data Archiving for Exfiltration
+**Finding:** Prior to potential data exfiltration, the attacker compressed collected files into an archive, indicating staging of sensitive information for transfer outside the environment.
+
+**Archive Identified:**
+```
+Shares.7z
+```
+
+**MITRE:** T1560.001 – Archive Collected Data: Archive via Utility
+
+**KQL:**
+```kql
+DeviceProcessEvents
+| where DeviceName contains "as-srv"
+| where AccountName contains "as.srv.administrator"
+| project
+    TimeGenerated,
+    ActionType,
+    DeviceName,
+    AccountName,
+    FileName,
+    ProcessCommandLine,
+    InitiatingProcessCommandLine,
+    FolderPath,
+    SHA256,
+    InitiatingProcessSHA256,
+    InitiatingProcessParentId,
+    InitiatingProcessParentFileName
+| order by TimeGenerated asc
+```
+
+<img width="750" height="682" alt="image" src="https://github.com/user-attachments/assets/212a9024-95fe-4127-9607-2087986decab" />
+
+---
+
+### FLAG 36 – Staged Archive Hash Identification
+**Finding:** The compressed archive created for data staging was uniquely identified via its SHA256 hash, enabling correlation of the artifact across telemetry and confirming the integrity of the staged data package.
+
+**SHA256 Identified:**
+```
+6886c0a2e59792e69df94d2cf6ae62c2364fda50a23ab44317548895020ab048
+```
+
+**MITRE:** T1560.001 – Archive Collected Data: Archive via Utility
 
 ---

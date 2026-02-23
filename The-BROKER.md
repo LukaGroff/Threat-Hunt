@@ -446,7 +446,7 @@ SECTION 5: PERSISTENCE - REMOTE TOOL [Hard]
 ---
 
 ### FLAG 15 – Remote Administration Tool Deployment
-**Finding:** A legitimate remote administration tool was installed to ensure persistent interactive access to compromised systems. This provided the attacker with long-term control beyond the initial malware execution.
+**Finding:** A legitimate remote administration tool was installed to ensure persistent interactive access to compromised systems. This provided the attacker with long-term control beyond the initial malware execution. **The answer can be seen in Flag 1**
 
 **Software Identified:**
 ```
@@ -455,86 +455,45 @@ AnyDesk.exe
 
 **MITRE:** T1219 – Remote Access Software
 
-**KQL:**
-```kql
-DeviceNetworkEvents
-| where DeviceName contains "sys1-dept"
-| project TimeGenerated, AdditionalFields, ActionType, RemoteUrl, InitiatingProcessCommandLine, InitiatingProcessFileName, RemoteIP, RemotePort
-| order by TimeGenerated asc 
-```
+**Alerts**
 
-*I checked for network events right after archive file creation*
+<img width="600" height="774" alt="image" src="https://github.com/user-attachments/assets/8d622a15-fbaf-49cf-a11c-01a507b02ba5" />
 
-<img width="600" height="400" alt="image" src="https://github.com/user-attachments/assets/02cfb869-103f-41a5-b03c-ec614c8886e7" />
+<img width="600" height="772" alt="image" src="https://github.com/user-attachments/assets/5a88a42c-6677-4d12-b0d8-97ca4807b491" />
 
 ---
 
-### FLAG 16 – Local Log Clearing Attempt Evidence
-**Finding:** An attempt was made to clear PowerShell operational logs to reduce forensic visibility.
+### FLAG 16 – Remote Tool Hash Identification
+**Finding:** The deployed remote access software was uniquely fingerprinted using its SHA256 hash, enabling confirmation of the exact binary used across affected systems.
 
-**Command Used:**
+**SHA256 Identified:**
 ```
-"wevtutil.exe" cl Microsoft-Windows-PowerShell/Operational
-```
-
-**MITRE:** T1070.001 – Indicator Removal on Host: Clear Windows Event Logs
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where DeviceName contains "sys1-dept"
-| project TimeGenerated, InitiatingProcessRemoteSessionDeviceName, ProcessRemoteSessionDeviceName, ProcessRemoteSessionIP, ProcessCommandLine
-| where ProcessRemoteSessionDeviceName != ""
-| order by TimeGenerated asc 
+f42b635d93720d1624c74121b83794d706d4d064bee027650698025703d20532
 ```
 
-<img width="750" height="276" alt="image" src="https://github.com/user-attachments/assets/e62c1bf4-577b-4497-b5b0-753321eb0721" />
+**MITRE:** T1219 – Remote Access Software
 
 ---
 
-### FLAG 17 – Second Endpoint Scope Confirmation
-**Finding:** Similar telemetry patterns confirmed a second endpoint was involved in the activity chain.
+### FLAG 17 – Living-off-the-Land Download Method
+**Finding:** The attacker leveraged a native Windows binary to retrieve the remote access tool from external infrastructure. This technique blends malicious activity with legitimate system utilities to evade detection. **The answer can be seen in Flag 1**
 
-**Second Compromised Endpoint:**
+**Binary Used:**
 ```
-main1-srvr
+certutil.exe
 ```
-
-**MITRE:** T1082 – System Information Discovery
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where ProcessCommandLine contains "scorecard"
-| project TimeGenerated, AccountName, FolderPath, FileName, InitiatingProcessCommandLine, InitiatingProcessFileName, ProcessCommandLine, ProcessRemoteSessionDeviceName
-| where ProcessRemoteSessionDeviceName != ""
-| order by TimeGenerated asc 
-```
-
-<img width="800" height="296" alt="image" src="https://github.com/user-attachments/assets/fa6771f1-f9aa-40c2-ab2e-7fa6f3dc3472" />
 
 ---
 
-### FLAG 18 – Approved Bonus Artifact Access on Second Endpoint
-**Finding:** The approved bonus artifact was accessed again on the second endpoint.
+### FLAG 18 – Remote Tool Configuration Access
+**Finding:** After deployment, the attacker accessed the AnyDesk configuration file to enable unattended access, ensuring persistent remote connectivity without user interaction.
 
-**Initiating Process Creation Time:**
+**Configuration File Path:**
 ```
-2025-12-04T03:11:58.6027696Z
-```
-
-**MITRE:** T1005 – Data from Local System
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where AccountName contains "main1-srvr"
-| where ProcessCommandLine contains "approved"
-| project TimeGenerated, AccountName, InitiatingProcessCreationTime,FolderPath, FileName, InitiatingProcessCommandLine, InitiatingProcessFileName, ProcessCommandLine, ProcessRemoteSessionDeviceName
-| order by TimeGenerated asc 
+C:\Users\Sophie.Turner\AppData\Roaming\AnyDesk\system.conf
 ```
 
-<img width="650" height="524" alt="image" src="https://github.com/user-attachments/assets/9984252d-e27c-4ec6-a93e-1bc520b4a1fd" />
+**MITRE:** T1546 – Event-Triggered Execution
 
 ---
 

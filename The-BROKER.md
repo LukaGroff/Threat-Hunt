@@ -151,6 +151,10 @@ This investigation reconstructs the full attack lifecycle using behavioral telem
 
 ---
 
+## SECTION 1: INITIAL ACCESS [Moderate]
+
+---
+
 ### FLAG 1 – Initial Infection Vector
 **Finding:** The infection chain began with execution of a malicious file masquerading as a PDF resume. The double-extension executable initiated the compromise and triggered subsequent malicious process activity.
 
@@ -184,225 +188,204 @@ was the root cause of the infection.
 
 **Logs**
 
-<img width="800" height="784" alt="image" src="https://github.com/user-attachments/assets/ec023980-10e1-4f72-984e-825825719b4e" />
+<img width="900" height="784" alt="image" src="https://github.com/user-attachments/assets/ec023980-10e1-4f72-984e-825825719b4e" />
 
-<img width="800" height="790" alt="image" src="https://github.com/user-attachments/assets/4ad4ab8e-faaa-46fc-873e-54edf407509b" />
+<img width="900" height="790" alt="image" src="https://github.com/user-attachments/assets/4ad4ab8e-faaa-46fc-873e-54edf407509b" />
 
 As can be seen from the logs, Daniel_Richardson_CV.pdf.exe was responsible for several malicious activities, which answer many questions.
 
 ---
 
-### FLAG 2 – Remote Session Source Attribution
-**Finding:** Remote session metadata revealed the originating source IP responsible for the initial access to the first endpoint.
+### FLAG 2 – Initial Payload Hash
+**Finding:** The malicious executable responsible for the initial compromise was uniquely identified via its SHA256 hash, enabling precise tracking across telemetry and preventing reliance on filename-based detection alone.
 
-**Source IP:**
+**SHA256 Identified:**
 ```
-192.168.0.110
+48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5
 ```
 
 **MITRE:** T1021 – Remote Services
 
 **KQL:**
 ```kql
-DeviceNetworkEvents
-| where DeviceName contains "sys1-dept"
-| where InitiatingProcessRemoteSessionIP != ""
+DeviceProcessEvents
+| where DeviceName contains "as-pc"
+| where AccountName contains "sophie"
+| where InitiatingProcessCommandLine contains "Daniel_Richardson_CV.pdf.exe"
+| project InitiatingProcessSHA256
 ```
-
-<img width="1000" height="640" alt="image" src="https://github.com/user-attachments/assets/8272664e-245c-4a48-a809-fc0c6019c408" />
 
 ---
 
-### FLAG 3 – Support Script Execution Confirmation
-**Finding:** A PowerShell script masquerading as a payroll support tool was executed from a user-accessible directory, indicating potential abuse of trusted tooling.
+### FLAG 3 – User Execution Context
+**Finding:** The malicious payload was launched via direct user interaction. Process lineage analysis revealed that the executable was initiated by the Windows shell, confirming manual execution rather than automated exploitation.
 
-**Command Used:**
+**Parent Process Identified:**
 ```
-"powershell.exe" -ExecutionPolicy Bypass -File C:\Users\5y51-D3p7\Downloads\PayrollSupportTool.ps1
+explorer.exe
 ```
 
-**MITRE:** T1059.001 – Command and Scripting Interpreter: PowerShell
+**MITRE:** T1204 – User Execution
 
 **KQL:**
 ```kql
 DeviceProcessEvents
-| where AccountName contains "5y51-d3p7"
-| where DeviceName contains "sys1-dept"
-| where ProcessCommandLine contains "powershell"
-| project TimeGenerated, AccountName, FolderPath, FileName, InitiatingProcessCommandLine, InitiatingProcessFileName, ProcessCommandLine
-| order by TimeGenerated asc 
+| where DeviceName contains "as-pc"
+| where AccountName contains "sophie"
+| where InitiatingProcessCommandLine contains "Daniel_Richardson_CV.pdf.exe"
+| project
+    TimeGenerated,
+    InitiatingProcessCommandLine,
+    InitiatingProcessParentFileName
+| order by TimeGenerated asc
 ```
 
-<img width="800" height="392" alt="image" src="https://github.com/user-attachments/assets/c3709943-50e0-48cd-a6d2-eee115ed06e4" />
+<img width="500" height="674" alt="image" src="https://github.com/user-attachments/assets/a33bfa3b-12aa-4154-8873-cb2532d3882c" />
 
 ---
 
-### FLAG 4 – System Reconnaissance Initiation
-**Finding:** The attacker initiated reconnaissance to enumerate user identity and privilege context immediately after gaining execution capability.
+### FLAG 4 – Suspicious Child Process Spawn
+**Finding:** Following execution, the malicious payload spawned a legitimate Windows process to blend into normal system activity. This behavior indicates potential process injection or execution staging within a trusted binary.
 
-**Recon Command:**
+**Child Process Identified:**
 ```
-"whoami.exe" /all
-```
-
-**MITRE:** T1033 – System Owner/User Discovery
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where AccountName contains "5y51-d3p7"
-| where DeviceName contains "sys1-dept"
-| project TimeGenerated, AccountName, FolderPath, FileName, InitiatingProcessCommandLine, InitiatingProcessFileName, ProcessCommandLine
-| order by TimeGenerated asc 
+notepad.exe
 ```
 
-<img width="800" height="398" alt="image" src="https://github.com/user-attachments/assets/08aec7c9-6e25-4297-9cb5-147fe2f57959" />
+**MITRE:** T1055 – Process Injection
+
+notepad.exe can be seen as the last child process of the Daniel_Richardson_CV.pdf.exe, which was later confirmed to be a process injection.
 
 ---
 
-### FLAG 5 – Sensitive Bonus-Related File Exposure
-**Finding:** Exploratory activity led to the discovery of sensitive year-end compensation data.
+### FLAG 5 – Suspicious Process Arguments
+**Finding:** The spawned legitimate process executed with abnormal arguments, indicating it was not opened for normal user interaction but instead likely used as a host process for malicious activity.
 
-**Sensitive File Identified:**
+**Full Command Line Observed:**
 ```
-BonusMatrix_Draft_v3.xlsx
-```
-
-**MITRE:** T1083 – File and Directory Discovery
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where AccountName contains "5y51-d3p7"
-| where DeviceName contains "sys1-dept"
-| project TimeGenerated, AccountName, FolderPath, FileName, InitiatingProcessCommandLine, InitiatingProcessFileName, ProcessCommandLine
-| order by TimeGenerated asc 
+notepad.exe ""
 ```
 
-<img width="650" height="398" alt="image" src="https://github.com/user-attachments/assets/a125bf36-0154-44e4-8b39-b719472f12ee" />
+**MITRE:** T1055 – Process Injection
 
 ---
 
-### FLAG 6 – Data Staging Activity Confirmation
-**Finding:** Sensitive HR data was staged for potential exfiltration through archive creation activity.
-
-**Initiating Process ID:**
-```
-2533274790396713
-```
-
-**MITRE:** T1074 – Data Staged
-
-**KQL:**
-```kql
-DeviceFileEvents
-| where InitiatingProcessAccountName contains "5y51-d3p7"
-| where DeviceName contains "sys1-dept"
-| where FileName has_any ("zip", "rar")
-| project TimeGenerated, ActionType, FileName, InitiatingProcessUniqueId, InitiatingProcessAccountName
-| order by TimeGenerated asc 
-```
-
-<img width="650" height="300" alt="image" src="https://github.com/user-attachments/assets/ad649907-a86a-4df4-af60-ea39b29decf4" />
+## SECTION 2: COMMAND & CONTROL [Moderate]
 
 ---
 
-### FLAG 7 – Outbound Connectivity Test
-**Finding:** Outbound connectivity was tested via PowerShell prior to any data transfer attempts.
+### FLAG 6 – Command & Control Domain
+**Finding:** The compromised host established outbound communication to attacker-controlled infrastructure, confirming active command and control (C2) operations following initial execution.
 
-**First Outbound Attempt Timestamp:**
+**C2 Domain Identified:**
 ```
-2025-12-03T06:27:31.1857946Z
-```
-
-**MITRE:** T1016 – System Network Configuration Discovery
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where AccountName contains "5y51-d3p7"
-| where DeviceName contains "sys1-dept"
-| where InitiatingProcessFileName contains "powershell"
-| project TimeGenerated, AccountName, FolderPath, FileName, InitiatingProcessCommandLine, InitiatingProcessFileName, ProcessCommandLine
-| order by TimeGenerated asc 
+cdn.cloud-endpoint.net
 ```
 
-<img width="650" height="406" alt="image" src="https://github.com/user-attachments/assets/f32caace-3846-45be-8445-adde27096617" />
-
-*after checking process events for the command executed, I correlated the execution time in DeviceProcessEvents with DeviceNetworkEvents to find the answer*
-
+**MITRE:** T1071.001 – Application Layer Protocol: Web Protocols
 
 **KQL:**
 ```kql
 DeviceNetworkEvents
-| where DeviceName contains "sys1-dept"
-| where RemoteUrl contains "example"
-| project TimeGenerated, ActionType, RemoteUrl, InitiatingProcessCommandLine, InitiatingProcessFileName, RemoteIP, RemotePort
-| order by TimeGenerated asc 
+| where DeviceName contains "as-pc1"
+| where InitiatingProcessAccountName contains "sophie"
+| where InitiatingProcessFileName contains "Daniel_Richardson"
+| project TimeGenerated, AdditionalFields, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFileName, RemoteIP, RemoteUrl
+| sort by TimeGenerated asc 
 ```
 
-<img width="650" height="404" alt="image" src="https://github.com/user-attachments/assets/32d38827-0cae-4d50-ae39-0cb25b333c2e" />
+<img width="900" height="394" alt="image" src="https://github.com/user-attachments/assets/5abbea1f-365f-43ad-a38f-184075fe2705" />
 
 ---
 
-### FLAG 8 – Registry-Based Persistence
-**Finding:** Persistence was established using a user-level Run key to enable execution on logon.
+### FLAG 7 – C2 Process Attribution
+**Finding:** Telemetry confirmed that the original malicious payload process was responsible for initiating outbound command-and-control traffic, linking network activity directly to the infection source.
 
-**Registry Key:**
+**Process Identified:**
 ```
-HKEY_CURRENT_USER\S-1-5-21-805396643-3920266184-3816603331-500\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+daniel_richardson_cv.pdf.exe
 ```
 
-**MITRE:** T1547.001 – Boot or Logon Autostart Execution: Registry Run Keys
+**MITRE:** T1071.001 – Application Layer Protocol: Web Protocols
+
+---
+
+### FLAG 8 – Payload Staging Infrastructure
+**Finding:** In addition to command-and-control communication, the attacker leveraged a separate external domain to host and retrieve additional payloads, indicating staged infrastructure supporting the intrusion.
+
+**Staging Domain Identified:**
+```
+sync.cloud-endpoint.net
+```
+
+**MITRE:** T1105 – Ingress Tool Transfer
 
 **KQL:**
 ```kql
-DeviceRegistryEvents
-| where InitiatingProcessAccountName contains "5y51-d3p7"
-| where DeviceName contains "sys1-dept"
-| where RegistryKey contains "run"
-| project TimeGenerated, RegistryKey, RegistryValueName, RegistryValueData
-| order by TimeGenerated asc 
+DeviceNetworkEvents
+| where DeviceName contains "as-pc"
+| where InitiatingProcessAccountName contains "sophie" or InitiatingProcessAccountName contains "david"
+| where RemoteUrl != ""
+| project TimeGenerated, AdditionalFields, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFileName, RemoteIP, RemoteUrl
+| sort by TimeGenerated asc 
 ```
 
-<img width="800" height="242" alt="image" src="https://github.com/user-attachments/assets/0314e64c-185f-4244-859f-18b11b461cbd" />
+<img width="800" height="338" alt="image" src="https://github.com/user-attachments/assets/07b66f3d-4876-4866-95ac-c5fa7b98ac84" />
+
+The attacker used the built-in Windows utility certutil.exe to download the malicious payload from the external staging domain (sync.cloud-endpoint.net) and saved it locally as RuntimeBroker.exe in C:\Users\Public\. This demonstrates tool transfer via a living-off-the-land binary and renaming of the payload for evasion and persistence.
 
 ---
 
-### FLAG 9 – Scheduled Task Persistence
-**Finding:** An additional persistence mechanism was identified through scheduled task creation.
+## SECTION 3: CREDENTIAL ACCESS [Hard]
 
-**Task Name:**
+---
+
+### FLAG 9 – Registry Hive Credential Targeting
+**Finding:** The attacker accessed sensitive local registry hives containing credential material. Specifically, the Security Account Manager (SAM) and SYSTEM hives were targeted to enable offline password hash extraction.
+
+**Registry Hives Identified:**
 ```
-BonusReviewAssist
+sam, system
 ```
 
-**MITRE:** T1053.005 – Scheduled Task/Job: Scheduled Task
+**MITRE:** T1003.002 – OS Credential Dumping: Security Account Manager
+
+**Alerts**
+
+<img width="600" height="276" alt="image" src="https://github.com/user-attachments/assets/86ae2f8b-40b4-4364-ab98-dfc07145d948" />
+
+<img width="600" height="176" alt="image" src="https://github.com/user-attachments/assets/c2c6ba5a-6456-4840-beb8-14faba951438" />
 
 **KQL:**
 ```kql
 DeviceProcessEvents
-| where AccountName contains "5y51-d3p7"
-| where DeviceName contains "sys1-dept"
-| where InitiatingProcessFileName contains "powershell"
-| where FileName contains "schtask"
-| project TimeGenerated, AccountName, FolderPath, FileName, InitiatingProcessCommandLine, InitiatingProcessFileName, ProcessCommandLine
-| order by TimeGenerated asc 
+| where DeviceName contains "as-pc"
+| where AccountName contains "sophie"
+| where ProcessCommandLine contains "HKLM"
+| project
+    TimeGenerated,
+    ActionType,
+    DeviceName,
+    AccountName,
+    FileName,
+    ProcessCommandLine,
+    InitiatingProcessCommandLine
+| order by TimeGenerated asc
 ```
 
-<img width="1000" height="406" alt="image" src="https://github.com/user-attachments/assets/a45951ea-056b-4eec-9b45-1ad6286f1e5a" />
+<img width="800" height="190" alt="image" src="https://github.com/user-attachments/assets/55a8fd53-a814-4d62-9bd6-aa8e2acde181" />
 
 ---
 
-### FLAG 10 – Secondary Access to Employee Scorecard Artifact
-**Finding:** A different remote session context accessed employee scorecard files, suggesting cross-departmental misuse.
+### FLAG 10 – Local Credential Staging Location
+**Finding:** Extracted credential data was written to a publicly accessible directory prior to potential exfiltration. This staging step allowed the attacker to consolidate harvested registry hive data before transferring it externally.
 
-**Remote Session User:**
+**Staging Directory Identified:**
 ```
-YE-HELPDESKTECH
+C:\Users\Public\
 ```
 
-**MITRE:** T1078 – Valid Accounts
+**MITRE:** T1074.001 – Data Staged: Local Data Staging
 
 **KQL:**
 ```kql

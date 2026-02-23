@@ -390,7 +390,7 @@ C:\Users\Public\
 ---
 
 ### FLAG 11 – Credential Extraction Execution Identity
-**Finding:** Credential dumping activity was performed under a specific user context, confirming which account was actively operating during registry hive access and staging operations.
+**Finding:** Credential dumping activity was performed under a specific user context, confirming which account was actively operating during registry hive access and staging operations. **The answer can be seen in flag 1**
 
 **User Identified:**
 ```
@@ -401,8 +401,12 @@ Sophie.Turner
 
 ---
 
+SECTION 4: DISCOVERY [Moderate]
+
+---
+
 ### FLAG 12 – Post-Compromise Identity Verification
-**Finding:** After establishing execution, the attacker validated the current security context to confirm privileges and determine their access level on the compromised system. Answer can be seen in Flag 1
+**Finding:** After establishing execution, the attacker validated the current security context to confirm privileges and determine their access level on the compromised system. **The answer can be seen in Flag 1**
 
 **Command Observed:**
 ```
@@ -413,63 +417,43 @@ whoami
 
 ---
 
-### FLAG 13 – Approved / Final Bonus Artifact Access
-**Finding:** The finalized and approved year-end bonus file was accessed without authorization.
+### FLAG 13 – Network Share Enumeration
+**Finding:** The attacker enumerated available network shares to identify accessible resources and potential lateral movement targets within the environment. **The answer can be seen in Flag 1**
 
-**Unauthorized Access Timestamp:**
+**Command Observed:**
 ```
-2025-12-03T07:25:39.1653621Z
-```
-
-**MITRE:** T1005 – Data from Local System
-
-**KQL:**
-```kql
-DeviceEvents
-| where DeviceName contains "sys1-dept"
-| where ActionType contains "SensitiveFileRead"
-| where FileName contains "bonus"
-| project TimeGenerated, FileName, FolderPath, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessRemoteSessionDeviceName
-| order by TimeGenerated asc 
+net.exe view
 ```
 
-<img width="650" height="350" alt="image" src="https://github.com/user-attachments/assets/eff7fbd1-a45e-417e-8e71-d0cc45d59944" />
+**MITRE:** T1135 – Network Share Discovery
 
 ---
 
-### FLAG 14 – Candidate Archive Creation Location
-**Finding:** A suspicious archive containing candidate-related materials was created in a user document directory.
+### FLAG 14 – Privileged Group Enumeration
+**Finding:** The attacker queried local privileged group membership to identify accounts with administrative rights, supporting potential privilege escalation or lateral movement planning. **The answer can be seen in Flag 1**
 
-**Archive Path:**
+**Group Queried:**
 ```
-C:\Users\5y51-D3p7\Documents\Q4Candidate_Pack.zip
-```
-
-**MITRE:** T1074.001 – Data Staged: Local Data Staging
-
-**KQL:**
-```kql
-DeviceFileEvents
-| where InitiatingProcessAccountName contains "5y51-d3p7"
-| where DeviceName contains "sys1-dept"
-| where FileName has_any ("zip", "rar")
-| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessAccountName
-| order by TimeGenerated asc 
+administrators
 ```
 
-<img width="650" height="294" alt="image" src="https://github.com/user-attachments/assets/9d2a79fa-55db-4338-9426-6833fbff6586" />
+**MITRE:** T1069.001 – Permission Groups Discovery: Local Groups
 
 ---
 
-### FLAG 15 – Outbound Transfer Attempt Timestamp
-**Finding:** A network POST-style outbound connection was attempted shortly after archive creation.
+SECTION 5: PERSISTENCE - REMOTE TOOL [Hard]
 
-**Outbound Attempt Timestamp:**
+---
+
+### FLAG 15 – Remote Administration Tool Deployment
+**Finding:** A legitimate remote administration tool was installed to ensure persistent interactive access to compromised systems. This provided the attacker with long-term control beyond the initial malware execution.
+
+**Software Identified:**
 ```
-2025-12-03T07:26:28.5959592Z
+AnyDesk.exe
 ```
 
-**MITRE:** T1041 – Exfiltration Over C2 Channel
+**MITRE:** T1219 – Remote Access Software
 
 **KQL:**
 ```kql

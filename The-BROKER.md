@@ -739,8 +739,8 @@ DeviceFileEvents
 
 ---
 
-### FLAG 30 – Backdoor Account Creation
-**Finding:** A new local account was created to provide persistent access independent of the original compromised credentials, ensuring continued control even if other mechanisms were discovered.
+### FLAG 31 – Backdoor Account Creation
+**Finding:** A new local account was created to provide persistent access independent of the original compromised credentials, ensuring continued control even if other mechanisms were discovered. **The answer can be seen in Flag 1**
 
 **Username Identified:**
 ```
@@ -749,14 +749,22 @@ svc_backup
 
 **MITRE:** T1136.001 – Create Account: Local Account
 
-**KQL:**
-```kql
-DeviceFileEvents
-| where DeviceName contains "as-pc"
-| where SHA256 contains "48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5"
-| where InitiatingProcessAccountName has_any ("sophie", "david")
-| project TimeGenerated, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessAccountDomain ,FileName, FolderPath, InitiatingProcessCommandLine, PreviousFileName, PreviousFolderPath, SHA256
-```
+---
+
+## SECTION 8: DATA ACCESS [Hard]
 
 ---
 
+### FLAG 32 – Sensitive Document Access
+**Finding:** The attacker accessed a sensitive financial spreadsheet located on the file server, indicating data targeting beyond credential theft and system control. 
+
+**Filename Identified:**
+```
+BACS_Payments_Dec2025.ods
+```
+
+Command used: `"soffice.exe" -o "\\AS-SRV\Payroll\BACS_Payments_Dec2025.ods"` **The answer can be seen in Flag 28**
+
+**MITRE:** T1213 – Data from Information Repositories
+
+---

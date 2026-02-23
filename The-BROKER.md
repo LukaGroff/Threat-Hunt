@@ -401,7 +401,7 @@ Sophie.Turner
 
 ---
 
-SECTION 4: DISCOVERY [Moderate]
+## SECTION 4: DISCOVERY [Moderate]
 
 ---
 
@@ -441,7 +441,7 @@ administrators
 
 ---
 
-SECTION 5: PERSISTENCE - REMOTE TOOL [Hard]
+## SECTION 5: PERSISTENCE - REMOTE TOOL [Hard]
 
 ---
 
@@ -486,7 +486,7 @@ certutil.exe
 ---
 
 ### FLAG 18 – Remote Tool Configuration Access
-**Finding:** After deployment, the attacker accessed the AnyDesk configuration file to enable unattended access, ensuring persistent remote connectivity without user interaction.
+**Finding:** After deployment, the attacker accessed the AnyDesk configuration file to enable unattended access, ensuring persistent remote connectivity without user interaction. **The answer can be seen in Flag 1**
 
 **Configuration File Path:**
 ```
@@ -497,12 +497,24 @@ C:\Users\Sophie.Turner\AppData\Roaming\AnyDesk\system.conf
 
 ---
 
-### FLAG 19 – Employee Scorecard Access on Second Endpoint
-**Finding:** Employee scorecard files were accessed again under a different remote session context.
+### FLAG 19 – Unattended Access Credential Configuration
+**Finding:** The attacker configured unattended access within the remote administration tool, setting a persistent authentication credential to maintain remote control without user approval. **The answer can be seen in Flag 1**
 
-**Remote Session Device:**
+**Password Set:**
 ```
-YE-FINANCEREVIE
+intrud3r!
+```
+
+**MITRE:** T1098 – Account Manipulation
+
+---
+
+### FLAG 20 – Remote Tool Deployment Footprint
+**Finding:** The remote administration tool was deployed across multiple systems within the environment, indicating deliberate expansion of persistent access beyond the initial compromise point.
+
+**Hostnames Identified:**
+```
+as-pc1, as-pc2, as-srv
 ```
 
 **MITRE:** T1021 – Remote Services
@@ -510,81 +522,241 @@ YE-FINANCEREVIE
 **KQL:**
 ```kql
 DeviceProcessEvents
-| where AccountName contains "main1-srvr"
-| where ProcessCommandLine contains "scorecard"
-| project TimeGenerated, AccountName, InitiatingProcessCreationTime,FolderPath, FileName, InitiatingProcessCommandLine, InitiatingProcessFileName, ProcessCommandLine, ProcessRemoteSessionDeviceName
-| order by TimeGenerated asc 
+| where FileName =~ "AnyDesk.exe"
+| summarize by DeviceName
 ```
 
-<img width="800" height="510" alt="image" src="https://github.com/user-attachments/assets/ab9c0597-8945-42de-9dc5-58fa6a055817" />
+<img width="300" height="232" alt="image" src="https://github.com/user-attachments/assets/a4019c1e-88d3-4b8c-a94d-de49f176cf8f" />
 
 ---
 
-### FLAG 20 – Staging Directory Identification on Second Endpoint
-**Finding:** A dedicated staging directory was used to consolidate internal reference materials and archives.
+## SECTION 6: LATERAL MOVEMENT [Advanced]
 
-**Staging Path:**
+---
+
+### FLAG 21 – Failed Remote Execution Attempts
+**Finding:** The attacker attempted lateral movement using multiple native remote execution utilities. Telemetry shows unsuccessful attempts using both WMI and SMB-based remote execution before pivoting to another method.
+
+**Tools Attempted:**
 ```
-C:\Users\Main1-Srvr\Documents\InternalReferences\ArchiveBundles\YearEnd_ReviewPackage_2025.zip
+WMIC.exe, PsExec.exe
 ```
 
-**MITRE:** T1074 – Data Staged
+**MITRE:** MITRE: T1047 – Windows Management Instrumentation & T1021.002 – SMB/Windows Admin Shares
+
+**KQL:**
+```kql
+DeviceProcessEvents
+| where DeviceName contains "as-pc"
+| where AccountName contains "sophie"
+| project
+    TimeGenerated,
+    ActionType,
+    DeviceName,
+    AccountName,
+    FileName,
+    ProcessCommandLine,
+    InitiatingProcessCommandLine,
+    FolderPath,
+    SHA256,
+    InitiatingProcessSHA256,
+    InitiatingProcessParentId,
+    InitiatingProcessParentFileName
+| order by TimeGenerated asc
+```
+
+<img width="900" height="754" alt="image" src="https://github.com/user-attachments/assets/17dfd6de-6a64-4bc4-a2e7-168d63294fa5" />
+
+---
+
+### FLAG 22 – Target Host of Failed Lateral Movement
+**Finding:** Remote execution attempts were directed at a specific workstation within the environment. Telemetry confirms this system as the intended pivot target prior to successful lateral movement. **The answer can be seen in Flag 21**
+
+**Target Host Identified:**
+```
+AS-PC2
+```
+
+**MITRE:** T1021 – Remote Services
+
+---
+
+### FLAG 23 – Successful Lateral Movement Method
+**Finding:** After unsuccessful remote execution attempts, the attacker successfully pivoted using Remote Desktop Protocol (RDP), establishing interactive access to the target system. **The answer can be seen in Flag 21**
+
+**Process Used:**
+```
+mstsc.exe
+```
+
+**MITRE:** T1021.001 – Remote Desktop Protocol
+
+---
+
+### FLAG 24 – Lateral Movement Path Reconstruction
+**Finding:** Correlation of authentication logs, remote session activity, and process telemetry confirms the sequential movement of the attacker across multiple systems within the environment.
+
+**Movement Path Identified:**
+```
+as-pc1>as-pc2>as-srv
+```
+
+**MITRE:** T1021 – Remote Services
+
+---
+
+
+### FLAG 25 – Valid Account Used for Lateral Movement
+**Finding:** Successful authentication during lateral movement was performed using a legitimate domain account, indicating credential compromise and reuse rather than exploitation of a vulnerability.
+
+**Account Identified:**
+```
+david.mitchell
+```
+
+**MITRE:** T1078 – Valid Accounts
+
+---
+
+### FLAG 26 – Disabled Account Reactivation
+**Finding:** A previously disabled account was re-enabled to facilitate continued access within the environment. This modification was performed using the native net.exe utility.
+
+**Parameter Used:**
+```
+active:yes
+```
+
+**MITRE:** T1098 – Account Manipulation
+
+**KQL:**
+```kql
+DeviceProcessEvents
+| where DeviceName contains "as-pc"
+| where AccountName contains "david"
+| project
+    TimeGenerated,
+    ActionType,
+    DeviceName,
+    AccountName,
+    FileName,
+    ProcessCommandLine,
+    InitiatingProcessCommandLine,
+    FolderPath,
+    SHA256,
+    InitiatingProcessSHA256,
+    InitiatingProcessParentId,
+    InitiatingProcessParentFileName
+| order by TimeGenerated asc
+```
+
+<img width="900" height="758" alt="image" src="https://github.com/user-attachments/assets/c5bd9cd1-dbbc-4a53-af20-b1bd1ec97479" />
+
+---
+
+### FLAG 27 – Account Activation Execution Context
+**Finding:** Telemetry confirms that the account reactivation was executed under a valid user session, identifying the operator responsible for enabling continued access. **The answer can be seen in Flag 26**
+
+**User Identified:**
+```
+david.mitchell
+```
+
+**MITRE:** T1078 – Valid Accounts
+
+---
+
+## SECTION 7: PERSISTENCE - SCHEDULED TASK [Hard]
+
+---
+
+### FLAG 28 – Scheduled Task Persistence
+**Finding:** A scheduled task was created to ensure recurring execution of a malicious payload, establishing automated persistence independent of user interaction.
+
+**Task Name Identified:**
+```
+MicrosoftEdgeUpdateCheck
+```
+
+**MITRE:** T1053.005 – Scheduled Task/Job: Scheduled Task
+
+**KQL:**
+```kql
+DeviceProcessEvents
+| where DeviceName contains "as-pc"
+| where AccountName contains "david"
+| project
+    TimeGenerated,
+    ActionType,
+    DeviceName,
+    AccountName,
+    FileName,
+    ProcessCommandLine,
+    InitiatingProcessCommandLine,
+    FolderPath,
+    SHA256,
+    InitiatingProcessSHA256,
+    InitiatingProcessParentId,
+    InitiatingProcessParentFileName
+| order by TimeGenerated asc
+```
+
+<img width="900" height="786" alt="image" src="https://github.com/user-attachments/assets/f34b7f03-bb54-4f2b-968d-83e0cde87a8f" />
+
+---
+
+### FLAG 29 – Masqueraded Persistence Binary
+**Finding:** The persistence payload was renamed to resemble a legitimate Windows system process, reducing the likelihood of detection during casual inspection.  **The answer can be seen in Flag 28**
+
+**Filename Used:**
+```
+RuntimeBroker.exe
+```
+
+**MITRE:** T1036 – Masquerading
+
+---
+
+### FLAG 30 – Persistence Payload Hash Correlation
+**Finding:** The renamed persistence binary was confirmed to share the same SHA256 hash as the original malicious payload, proving reuse of the initial malware for continued access.
+
+**SHA256 Identified:**
+```
+48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5
+```
+
+**MITRE:** T1036 – Masquerading
 
 **KQL:**
 ```kql
 DeviceFileEvents
-| where InitiatingProcessAccountName contains "main1-srvr"
-| where FileName has_any ("zip", "rar")
-| project TimeGenerated, DeviceName, FileName, FolderPath
-| order by TimeGenerated asc 
+| where DeviceName contains "as-pc"
+| where SHA256 contains "48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5"
+| where InitiatingProcessAccountName has_any ("sophie", "david")
+| project TimeGenerated, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessAccountDomain ,FileName, FolderPath, InitiatingProcessCommandLine, PreviousFileName, PreviousFolderPath, SHA256
 ```
 
-<img width="650" height="228" alt="image" src="https://github.com/user-attachments/assets/a8a459b1-b869-4836-9fd4-0ae5eb99ab17" />
+<img width="900" height="260" alt="image" src="https://github.com/user-attachments/assets/2e12f663-2364-4835-ae85-765a43e995f3" />
 
 ---
 
-### FLAG 21 – Staging Activity Timing on Second Endpoint
-**Finding:** Final staging activity occurred shortly before outbound connection attempts.
+### FLAG 30 – Backdoor Account Creation
+**Finding:** A new local account was created to provide persistent access independent of the original compromised credentials, ensuring continued control even if other mechanisms were discovered.
 
-**Staging Timestamp:**
+**Username Identified:**
 ```
-2025-12-04T03:15:29.2597235Z
+svc_backup
 ```
 
-**MITRE:** T1074 – Data Staged
+**MITRE:** T1136.001 – Create Account: Local Account
 
 **KQL:**
 ```kql
 DeviceFileEvents
-| where InitiatingProcessAccountName contains "main1-srvr"
-| where FileName has_any ("zip", "rar")
-| project TimeGenerated, DeviceName, FileName, FolderPath
-| order by TimeGenerated asc 
+| where DeviceName contains "as-pc"
+| where SHA256 contains "48b97fd91946e81e3e7742b3554585360551551cbf9398e1f34f4bc4eac3a6b5"
+| where InitiatingProcessAccountName has_any ("sophie", "david")
+| project TimeGenerated, ActionType, DeviceName, InitiatingProcessAccountName, InitiatingProcessAccountDomain ,FileName, FolderPath, InitiatingProcessCommandLine, PreviousFileName, PreviousFolderPath, SHA256
 ```
-
-<img width="650" height="228" alt="image" src="https://github.com/user-attachments/assets/a8a459b1-b869-4836-9fd4-0ae5eb99ab17" />
 
 ---
 
-### FLAG 22 – Outbound Connection Remote IP (Final Phase)
-**Finding:** The second endpoint attempted an outbound connection consistent with data transfer behavior.
-
-**Remote IP:**
-```
-54.83.21.156
-```
-
-**MITRE:** T1041 – Exfiltration Over C2 Channel
-
-**KQL:**
-```kql
-DeviceNetworkEvents
-| where DeviceName contains "main1-srvr"
-| where InitiatingProcessAccountName contains "main1-srvr"
-| project TimeGenerated, RemoteUrl, RemoteIP, RemotePort, InitiatingProcessCommandLine, InitiatingProcessAccountName
-| order by TimeGenerated asc 
-```
-
-<img width="650" height="350" alt="image" src="https://github.com/user-attachments/assets/4505464d-87b7-4754-8ffe-ac71404e1f71" />
-
----

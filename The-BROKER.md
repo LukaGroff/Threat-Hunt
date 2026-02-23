@@ -332,7 +332,7 @@ DeviceNetworkEvents
 
 <img width="800" height="338" alt="image" src="https://github.com/user-attachments/assets/07b66f3d-4876-4866-95ac-c5fa7b98ac84" />
 
-The attacker used the built-in Windows utility certutil.exe to download the malicious payload from the external staging domain (sync.cloud-endpoint.net) and saved it locally as RuntimeBroker.exe in C:\Users\Public\. This demonstrates tool transfer via a living-off-the-land binary and renaming of the payload for evasion and persistence.
+The attacker used the built-in Windows utility certutil.exe to download the malicious payload from the external staging domain (sync.cloud-endpoint.net) and saved it locally as RuntimeBroker.exe in C:\Users\Public\ (flag 10). This demonstrates tool transfer via a living-off-the-land binary and renaming of the payload for evasion and persistence.
 
 ---
 
@@ -387,62 +387,29 @@ C:\Users\Public\
 
 **MITRE:** T1074.001 – Data Staged: Local Data Staging
 
-**KQL:**
-```kql
-DeviceProcessEvents
-| where DeviceName contains "sys1-dept"
-| project TimeGenerated, InitiatingProcessRemoteSessionDeviceName, ProcessRemoteSessionDeviceName, ProcessRemoteSessionIP, ProcessCommandLine
-| where ProcessRemoteSessionDeviceName != ""
-| order by TimeGenerated asc
+---
+
+### FLAG 11 – Credential Extraction Execution Identity
+**Finding:** Credential dumping activity was performed under a specific user context, confirming which account was actively operating during registry hive access and staging operations.
+
+**User Identified:**
+```
+Sophie.Turner
 ```
 
-<img width="1000" height="578" alt="image" src="https://github.com/user-attachments/assets/7f062d7a-b598-4489-99c8-4f839c32e662" />
+**MITRE:** T1078 – Valid Accounts
 
 ---
 
-### FLAG 11 – Bonus Matrix Activity by a New Remote Session Context
-**Finding:** Another remote session device associated with HR functions accessed bonus payout-related artifacts later in the chain.
+### FLAG 12 – Post-Compromise Identity Verification
+**Finding:** After establishing execution, the attacker validated the current security context to confirm privileges and determine their access level on the compromised system. Answer can be seen in Flag 1
 
-**Remote Session Department:**
+**Command Observed:**
 ```
-YE-HRPLANNER
-```
-
-**MITRE:** T1021 – Remote Services
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where DeviceName contains "sys1-dept"
-| project TimeGenerated, InitiatingProcessRemoteSessionDeviceName, ProcessRemoteSessionDeviceName, ProcessRemoteSessionIP, ProcessCommandLine
-| where ProcessRemoteSessionDeviceName != ""
-| order by TimeGenerated asc
+whoami
 ```
 
-<img width="1000" height="610" alt="image" src="https://github.com/user-attachments/assets/fc06f772-3f89-433f-acfe-744d94da88a2" />
-
----
-
-### FLAG 12 – Performance Review Access Validation
-**Finding:** Employee performance review files were accessed unintentionally from a separate directory using user-level tooling.
-
-**Access Timestamp:**
-```
-2025-12-03T07:25:15.6288106Z
-```
-
-**MITRE:** T1083 – File and Directory Discovery
-
-**KQL:**
-```kql
-DeviceProcessEvents
-| where DeviceName contains "sys1-dept"
-| project TimeGenerated, InitiatingProcessRemoteSessionDeviceName, ProcessRemoteSessionDeviceName, ProcessRemoteSessionIP, ProcessCommandLine
-| where ProcessRemoteSessionDeviceName != ""
-| order by TimeGenerated asc
-```
-
-<img width="700" height="290" alt="image" src="https://github.com/user-attachments/assets/25322990-9e5a-41ea-930f-7bd0b53e48b2" />
+**MITRE:** T1033 – System Owner/User Discovery
 
 ---
 

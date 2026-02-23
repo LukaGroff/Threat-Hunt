@@ -151,25 +151,41 @@ This investigation reconstructs the full attack lifecycle using behavioral telem
 
 ---
 
-### FLAG 1 – Initial Endpoint Association
-**Finding:** A specific local account was first observed in process telemetry, allowing identification of the initial endpoint tied to the activity chain.
+### FLAG 1 – Initial Infection Vector
+**Finding:** The infection chain began with execution of a malicious file masquerading as a PDF resume. The double-extension executable initiated the compromise and triggered subsequent malicious process activity.
 
-**Endpoint Identified:**
+**File Identified:**
 ```
-sys1-dept
+Daniel_Richardson_CV.pdf.exe
 ```
 
-**MITRE:** T1078 – Valid Accounts
+**MITRE:** T1204.002 – User Execution: Malicious File
 
 **KQL:**
 ```kql
 DeviceProcessEvents
-| where AccountName contains "5y51-d3p7"
-| project TimeGenerated, AccountName, DeviceName
-| order by TimeGenerated asc 
+| where DeviceName contains "as-pc"
+| where AccountName contains "sophie"
+| where InitiatingProcessParentId == "4268"
+| project
+    TimeGenerated,
+    AccountName,
+    FileName,
+    ProcessCommandLine,
+    InitiatingProcessCommandLine,
+    FolderPath,
+    InitiatingProcessParentId
+| order by TimeGenerated asc
 ```
+**Alert**: an alert was triggered, "Suspicious executable with multiple file extensions", which clearly shows Daniel_Richardson_CV.pdf.exe
+was the root cause of the infection.
+<img width="600" height="1012" alt="image" src="https://github.com/user-attachments/assets/ccd5aeeb-11e2-4ef1-8984-081d13896e96" />
 
-<img width="800" height="462" alt="image" src="https://github.com/user-attachments/assets/9ca8698b-e09a-4ca5-960d-75894ca72a12" />
+**Logs**
+<img width="800" height="784" alt="image" src="https://github.com/user-attachments/assets/ec023980-10e1-4f72-984e-825825719b4e" />
+<img width="800" height="790" alt="image" src="https://github.com/user-attachments/assets/4ad4ab8e-faaa-46fc-873e-54edf407509b" />
+
+As can be seen from the logs, Daniel_Richardson_CV.pdf.exe was responsible for several malicious activities, which answer many questions.
 
 ---
 

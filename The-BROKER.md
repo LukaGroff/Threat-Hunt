@@ -851,7 +851,7 @@ DeviceProcessEvents
 ---
 
 ### FLAG 37 – Log Clearing Activity
-**Finding:** The attacker cleared critical Windows event logs to remove forensic evidence of their activity, indicating deliberate anti-forensics behavior prior to completing the operation.
+**Finding:** The attacker cleared critical Windows event logs to remove forensic evidence of their activity, indicating deliberate anti-forensics behavior prior to completing the operation. **The answer can be seen in flag 1**
 
 **Logs Cleared:**
 ```
@@ -862,4 +862,56 @@ security, system
 
 ---
 
+### FLAG 38 – Reflective Code Loading Detection
+**Finding:** Security telemetry recorded reflective loading of a .NET assembly directly into memory, confirming fileless execution and evasion of disk-based detection mechanisms.
 
+**ActionType Identified:**
+```
+ClrUnbackedModuleLoaded
+```
+
+**MITRE:** T1055 – Process Injection
+
+**KQL:**
+```kql
+DeviceEvents
+| where DeviceName contains "as-pc"
+| where InitiatingProcessAccountName has_any ("david", "sophie")
+| where ActionType has_any ("ClrUnbackedModuleLoaded")
+//| distinct ActionType
+| sort by TimeGenerated asc 
+```
+
+<img width="900" height="256" alt="image" src="https://github.com/user-attachments/assets/0a319b98-437e-4bbf-a966-b40bf0b7149a" />
+
+**Microsoft Defender Timeline**
+
+<img width="900" height="430" alt="image" src="https://github.com/user-attachments/assets/59d97a3a-8531-431c-8755-5ec458c16693" />
+
+**Process tree on the alert**
+
+<img width="650" height="612" alt="image" src="https://github.com/user-attachments/assets/28cc18c6-d039-4f07-863b-8d9d582752ce" />
+
+---
+
+### FLAG 39 – In-Memory Credential Theft Tool
+**Finding:** Telemetry confirmed that a credential theft utility was loaded directly into memory via reflective .NET assembly execution, avoiding traditional disk-based detection. **The answer can be seen in flag 38**
+
+**Tool Identified:**
+```
+SharpChrome
+```
+
+**MITRE:** T1555.003 – Credentials from Web Browsers
+
+---
+
+### FLAG 40 – Malicious Assembly Host Process
+**Finding:** The in-memory credential theft tool was injected into a legitimate Windows process, allowing malicious execution to blend into normal system activity and evade basic process-based detection. **The answer can be seen in flag 38**
+
+**Host Process Identified:**
+```
+notepad.exe
+```
+
+**MITRE:** T1055 – Process Injection

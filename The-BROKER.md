@@ -526,7 +526,7 @@ DeviceProcessEvents
 | summarize by DeviceName
 ```
 
-<img width="300" height="232" alt="image" src="https://github.com/user-attachments/assets/a4019c1e-88d3-4b8c-a94d-de49f176cf8f" />
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/a4019c1e-88d3-4b8c-a94d-de49f176cf8f" />
 
 ---
 
@@ -890,7 +890,7 @@ DeviceEvents
 
 **Process tree on the alert**
 
-<img width="650" height="612" alt="image" src="https://github.com/user-attachments/assets/28cc18c6-d039-4f07-863b-8d9d582752ce" />
+<img width="400" height="612" alt="image" src="https://github.com/user-attachments/assets/28cc18c6-d039-4f07-863b-8d9d582752ce" />
 
 ---
 

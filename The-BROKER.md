@@ -240,7 +240,7 @@ DeviceProcessEvents
 | order by TimeGenerated asc
 ```
 
-<img width="500" height="674" alt="image" src="https://github.com/user-attachments/assets/a33bfa3b-12aa-4154-8873-cb2532d3882c" />
+<img width="400" height="674" alt="image" src="https://github.com/user-attachments/assets/a33bfa3b-12aa-4154-8873-cb2532d3882c" />
 
 ---
 
@@ -457,9 +457,9 @@ AnyDesk.exe
 
 **Alerts**
 
-<img width="600" height="774" alt="image" src="https://github.com/user-attachments/assets/8d622a15-fbaf-49cf-a11c-01a507b02ba5" />
+<img width="300" alt="image" src="https://github.com/user-attachments/assets/8d622a15-fbaf-49cf-a11c-01a507b02ba5" />
 
-<img width="600" height="772" alt="image" src="https://github.com/user-attachments/assets/5a88a42c-6677-4d12-b0d8-97ca4807b491" />
+<img width="300" alt="image" src="https://github.com/user-attachments/assets/5a88a42c-6677-4d12-b0d8-97ca4807b491" />
 
 ---
 
@@ -849,3 +849,17 @@ DeviceProcessEvents
 **MITRE:** T1560.001 – Archive Collected Data: Archive via Utility
 
 ---
+
+### FLAG 37 – Log Clearing Activity
+**Finding:** The attacker cleared critical Windows event logs to remove forensic evidence of their activity, indicating deliberate anti-forensics behavior prior to completing the operation.
+
+**Logs Cleared:**
+```
+security, system
+```
+
+**MITRE:** T1070.001 – Indicator Removal: Clear Windows Event Logs
+
+---
+
+

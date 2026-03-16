@@ -8,6 +8,7 @@
 **Scope:** Two Windows endpoints
 
 
+
 **Analyst:** Luka Groff
 
 ---

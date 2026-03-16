@@ -1,6 +1,6 @@
 # Cyber Range Threat Hunt - Akira Ransomware (Advanced)
 
-
+<img width="800" height="1536" alt="Image" src="https://github.com/user-attachments/assets/ec8bef4d-ad33-4a07-a005-bc1e7e134fd9" />
 
 **Date of Incident:** 15 March 2026  
 **Data Source:** Log Analytics workspaces, Microsoft Defender for Endpoint  

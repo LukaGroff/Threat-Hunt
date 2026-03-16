@@ -5,7 +5,7 @@
 **Date of Incident:** 15 March 2026  
 **Data Source:** Log Analytics workspaces, Microsoft Defender for Endpoint  
 
-**Scope:** 3 Windows endpoints
+**Scope:** 2 Windows endpoints
 
 **Analyst:** Luka Groff
 

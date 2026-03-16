@@ -297,6 +297,17 @@ cdn.cloud-endpoint.net
 
 **MITRE:** T1105 – Ingress Tool Transfer
 
+<img width="1000" height="408" alt="Image" src="https://github.com/user-attachments/assets/74bec2e5-c757-425c-a94e-95a022946cc4" />
+
+**KQL:**
+```
+DeviceNetworkEvents
+| where DeviceName contains "as-"
+| where InitiatingProcessCommandLine has_any ("wsync")
+| project TimeGenerated, DeviceName, InitiatingProcessAccountName, InitiatingProcessAccountDomain, InitiatingProcessCommandLine, InitiatingProcessFileName, RemoteIP, RemoteUrl
+| sort by TimeGenerated asc 
+```
+
 ---
 
 ### FLAG 7 – C2 Infrastructure IPs
@@ -321,6 +332,17 @@ relay-0b975d23.net.anydesk.com
 
 **MITRE:** T1219 – Remote Access Software
 
+<img width="1000" height="762" alt="Image" src="https://github.com/user-attachments/assets/79a5af5a-58fa-4a24-9b9d-d5139eac9e77" />
+
+**KQL:**
+```
+DeviceNetworkEvents
+| where DeviceName contains "as-"
+| where RemoteUrl matches regex @"relay-.*\.net\.anydesk\.com"
+| project TimeGenerated, DeviceName, InitiatingProcessAccountName, InitiatingProcessAccountDomain, InitiatingProcessCommandLine, InitiatingProcessFileName, RemoteIP, RemoteUrl
+| sort by TimeGenerated asc 
+```
+
 ---
 
 ## SECTION 3: DEFENSE EVASION [Hard]
@@ -336,6 +358,25 @@ kill.bat
 ```
 
 **MITRE:** T1562.001 – Impair Defenses
+
+**KQL:**
+```
+DeviceProcessEvents
+| where DeviceName startswith "as-"
+| where AccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where InitiatingProcessCommandLine contains "kill.bat"
+| project TimeGenerated, AccountName, DeviceName, FileName, ProcessCommandLine, InitiatingProcessCommandLine
+| sort by TimeGenerated asc 
+```
+
+<img width="950" height="778" alt="Image" src="https://github.com/user-attachments/assets/a6ba43ff-dabb-4145-a212-662fe18b4d65" />
+
+<img width="1000" height="794" alt="Image" src="https://github.com/user-attachments/assets/dd1be47a-550e-4f1d-af84-24d7a97d9b22" />
+
+**Defender:**
+
+<img width="900" height="788" alt="Image" src="https://github.com/user-attachments/assets/12621c78-803f-4a4e-9047-6fe59bf53b98" />
+
 
 ---
 
@@ -359,6 +400,18 @@ kill.bat
 DisableAntiSpyware
 ```
 
+**KQL:**
+```
+DeviceProcessEvents
+| where DeviceName startswith "as-"
+| where AccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where ProcessCommandLine contains "reg "
+| project TimeGenerated, AccountName, DeviceName, FileName, ProcessCommandLine, InitiatingProcessCommandLine
+| sort by TimeGenerated asc 
+```
+
+<img width="1000" height="192" alt="Image" src="https://github.com/user-attachments/assets/e51725a9-7da0-4348-87fa-6cc061e33ad4" />
+
 **MITRE:** T1112 – Modify Registry
 
 ---
@@ -369,6 +422,13 @@ DisableAntiSpyware
 **Timestamp (UTC):**
 ```
 21:03:42
+```
+
+**KQL:**
+```
+DeviceRegistryEvents
+| where DeviceName contains "as-pc"
+| where RegistryValueName contains "DisableAnti"
 ```
 
 **MITRE:** T1112 – Modify Registry
@@ -386,6 +446,18 @@ DisableAntiSpyware
 ```
 tasklist | findstr lsass
 ```
+
+**KQL:**
+```
+DeviceProcessEvents
+| where DeviceName startswith "as-"
+| where AccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where ProcessCommandLine contains "tasklist"
+| project TimeGenerated, AccountName, DeviceName, FileName, ProcessCommandLine, InitiatingProcessCommandLine
+| sort by TimeGenerated asc 
+```
+
+<img width="1000" height="308" alt="Image" src="https://github.com/user-attachments/assets/fcd99f9a-f68c-416f-9a5a-e27fdb39167f" />
 
 **MITRE:** T1057 – Process Discovery
 

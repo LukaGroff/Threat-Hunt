@@ -471,6 +471,18 @@ DeviceProcessEvents
 \Device\NamedPipe\lsass
 ```
 
+**KQL:**
+```
+DeviceEvents
+| where DeviceName contains "as-"
+| where ActionType contains "NamedPipeEvent"
+| where AdditionalFields contains "lsass"
+| project TimeGenerated, AdditionalFields, InitiatingProcessCommandLine, InitiatingProcessFileName
+| sort by TimeGenerated asc 
+```
+
+<img width="1200" height="786" alt="Image" src="https://github.com/user-attachments/assets/c37a2e89-f144-4cb2-9fc0-5c9f043ca0b3" />
+
 **MITRE:** T1003 – OS Credential Dumping
 
 ---
@@ -499,6 +511,18 @@ AnyDesk
 C:\Users\Public\
 ```
 
+**KQL:**
+```
+DeviceProcessEvents
+| where DeviceName startswith "as-"
+| where AccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where ProcessCommandLine contains "anydesk"
+| project TimeGenerated, AccountName, DeviceName, FileName, FolderPath, ProcessCommandLine, InitiatingProcessCommandLine
+| sort by TimeGenerated asc 
+```
+
+<img width="900" height="804" alt="Image" src="https://github.com/user-attachments/assets/0eced0ef-6958-4246-ba67-ec6bba32ef37" />
+
 **MITRE:** T1036 – Masquerading
 
 ---
@@ -510,6 +534,24 @@ C:\Users\Public\
 ```
 88.97.164.155
 ```
+
+**KQL:**
+```
+DeviceNetworkEvents
+| where DeviceName contains "as-"
+| where RemoteIPType contains "public"
+| where RemoteIP != ""
+| where InitiatingProcessFileName contains "anydesk"
+| where RemoteUrl == ""
+| project TimeGenerated, DeviceName,ActionType, InitiatingProcessAccountName, InitiatingProcessFileName, RemoteIP, RemoteUrl
+| sort by TimeGenerated asc 
+```
+
+**KQL command explanation:**
+- There were too many remote IPs, and it was difficult to make sense of it all, so I had to narrow it down by making RemoteIPType public as well as ignoring all the remote IPs that have a URL attached to it (RemoteUrl == "") because a computer's public IP does not have a URL. The only thing left to do was to figure out which process was used for the remote connection, which was anydesk.
+
+
+<img width="1200" height="812" alt="Image" src="https://github.com/user-attachments/assets/3db1ab48-2822-45cf-b056-97d98606f7e1" />
 
 **MITRE:** T1071 – Application Layer Protocol
 

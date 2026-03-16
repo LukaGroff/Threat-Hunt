@@ -279,6 +279,11 @@ sync.cloud-endpoint.net
 
 **MITRE:** T1105 – Ingress Tool Transfer
 
+<img width="1000" height="284" alt="Image" src="https://github.com/user-attachments/assets/1c4a7f17-1f93-42e9-b8d2-8ae82649d5b4" />
+
+**Defender**:
+<img width="800" height="862" alt="Image" src="https://github.com/user-attachments/assets/b5856c3c-a880-423a-b2ae-45e93b105606" />
+
 ---
 
 ### FLAG 6 – Ransomware Staging Domain

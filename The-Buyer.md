@@ -548,7 +548,7 @@ DeviceNetworkEvents
 ```
 
 **KQL command explanation:**
-- There were too many remote IPs, and it was difficult to make sense of it all, so I had to narrow it down by making RemoteIPType public as well as ignoring all the remote IPs that have a URL attached to it (RemoteUrl == "") because a computer's public IP does not have a URL. The only thing left to do was to figure out which process was used for the remote connection, which was anydesk.
+- There were too many remote IPs, and it was difficult to make sense of it all, so I had to narrow it down by making RemoteIPType public as well as ignoring all the remote IPs that have a URL attached to it (RemoteUrl == ""). The only thing left to do was to figure out which process was used for the remote connection, which was anydesk.
 
 
 <img width="1200" height="812" alt="Image" src="https://github.com/user-attachments/assets/3db1ab48-2822-45cf-b056-97d98606f7e1" />
@@ -581,6 +581,10 @@ david.mitchell
 wsync.exe
 ```
 
+**Defender:**
+
+<img width="1000" height="862" alt="Image" src="https://github.com/user-attachments/assets/95724679-a871-457a-966b-2350adf61ef0" />
+
 **MITRE:** T1071 – Application Layer Protocol
 
 ---
@@ -604,6 +608,18 @@ C:\ProgramData\
 ```
 66b876c52946f4aed47dd696d790972ff265b6f4451dab54245bc4ef1206d90b
 ```
+
+**KQL:**
+```
+DeviceFileEvents
+| where DeviceName startswith "as-"
+| where InitiatingProcessAccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where FileName contains "wsync"
+| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessCommandLine, SHA256
+| order by TimeGenerated asc 
+```
+
+<img width="1000" height="366" alt="Image" src="https://github.com/user-attachments/assets/e711e71d-28db-4e8b-b3a8-f3ea8809ce77" />
 
 **MITRE:** T1071 – Application Layer Protocol
 
@@ -632,6 +648,17 @@ C:\ProgramData\
 ```
 scan.exe
 ```
+**KQL:**
+```
+DeviceFileEvents
+| where DeviceName startswith "as-"
+| where InitiatingProcessAccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where FileName contains "scan"
+| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessCommandLine, SHA256
+| order by TimeGenerated asc 
+```
+
+<img width="1000" height="406" alt="Image" src="https://github.com/user-attachments/assets/8e88c4bf-9bc3-41f3-976c-57be4ae4f8d1" />
 
 **MITRE:** T1046 – Network Service Discovery
 
@@ -657,6 +684,8 @@ scan.exe
 /portable "C:/Users/david.mitchell/Downloads/" /lng en_us
 ```
 
+<img width="1000" height="134" alt="Image" src="https://github.com/user-attachments/assets/8c2fa6d9-aa08-4244-b056-9bbdf4c6af89" />
+
 **MITRE:** T1046 – Network Service Discovery
 
 ---
@@ -669,9 +698,18 @@ scan.exe
 10.1.0.154, 10.1.0.183
 ```
 
+**KQL:**
+```
+DeviceProcessEvents
+| where DeviceName contains "as-"
+| where FileName contains "net.exe"
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessFileName
+| order by TimeGenerated asc
+```
+
+<img width="1000" height="116" alt="Image" src="https://github.com/user-attachments/assets/9fc80ee2-3194-45dc-9e53-215cf5dfb241" />
+
 **MITRE:** T1046 – Network Service Discovery
-
-
 
 ---
 
@@ -703,6 +741,8 @@ as.srv.administrator
 bitsadmin
 ```
 
+<img width="1000" height="284" alt="Image" src="https://github.com/user-attachments/assets/a9c15fda-ef53-41e2-8957-8c631c02e810" />
+
 **MITRE:** T1105 – Ingress Tool Transfer
 
 ---
@@ -712,8 +752,23 @@ bitsadmin
 
 **PowerShell Cmdlet:**
 ```
-Invoke-WebRequest
+Invoke-WebRequest (IWR)
 ```
+
+**KQL:**
+```
+DeviceEvents
+| where DeviceName contains "as-"
+| where AdditionalFields contains "IWR"
+| project TimeGenerated, AdditionalFields, InitiatingProcessCommandLine, InitiatingProcessFileName
+| sort by TimeGenerated asc 
+```
+
+<img width="1000" height="462" alt="Image" src="https://github.com/user-attachments/assets/58db4890-dd6d-4a29-a862-75ab6983ae14" />
+
+**Defender:**
+
+<img width="1000" height="862" alt="Image" src="https://github.com/user-attachments/assets/7f8430e9-5e19-43a6-9ef1-9f9c40c4b666" />
 
 **MITRE:** T1105 – Ingress Tool Transfer
 
@@ -730,6 +785,18 @@ Invoke-WebRequest
 ```
 st.exe
 ```
+
+**KQL:**
+```
+DeviceFileEvents
+| where DeviceName startswith "as-"
+| where InitiatingProcessAccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where FileName has_any ("7z", "zip", "tar")
+| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessCommandLine, SHA256
+| order by TimeGenerated asc 
+```
+
+<img width="1100" height="136" alt="Image" src="https://github.com/user-attachments/assets/32416333-ae13-4461-982d-8e48a6fdc10e" />
 
 **MITRE:** T1560 – Archive Collected Data
 
@@ -771,6 +838,18 @@ exfil_data.zip
 updater.exe
 ```
 
+**KQL:**
+```
+DeviceFileEvents
+| where DeviceName startswith "as-"
+| where InitiatingProcessAccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where FileName contains "akira"
+| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessCommandLine, SHA256
+| order by TimeGenerated asc 
+```
+
+<img width="1000" height="532" alt="Image" src="https://github.com/user-attachments/assets/02103063-0d7a-4cdb-b9ae-9cfaf2a0c98d" />
+
 **MITRE:** T1036 – Masquerading
 
 ---
@@ -782,6 +861,19 @@ updater.exe
 ```
 e609d070ee9f76934d73353be4ef7ff34b3ecc3a2d1e5d052140ed4cb9e4752b
 ```
+
+**KQL:**
+```
+DeviceFileEvents
+| where DeviceName startswith "as-"
+| where InitiatingProcessAccountName has_any ("sophie.turner", "david.mitchell", "as.srv.administrator")
+| where FileName contains "updater"
+| where InitiatingProcessCommandLine !contains "OneDrive"
+| project TimeGenerated, ActionType, FileName, FolderPath, InitiatingProcessCommandLine, SHA256
+| order by TimeGenerated asc  
+```
+
+<img width="1000" height="184" alt="Image" src="https://github.com/user-attachments/assets/aac2fed8-558d-4a51-abcc-603bf3fe2927" />
 
 **MITRE:** T1486 – Data Encrypted for Impact
 
@@ -806,6 +898,8 @@ powershell.exe
 ```
 wmic shadowcopy delete
 ```
+
+<img width="1000" height="244" alt="Image" src="https://github.com/user-attachments/assets/265c8ea9-b03c-4a91-8456-1a597d73b23d" />
 
 **MITRE:** T1490 – Inhibit System Recovery
 

@@ -215,6 +215,8 @@ These systems were involved in reconnaissance, lateral movement, ransomware depl
 
 ---
 
+<img width="685" alt="Image" src="https://github.com/user-attachments/assets/47f31253-cbf4-4adf-9a23-f345dcb1ef89" />
+
 ### FLAG 1 – Threat Actor
 **Finding:** The ransomware family responsible for the attack was identified from the ransom note left on the compromised system. The note clearly referenced the **Akira** ransomware group, which is known for enterprise-targeted double extortion campaigns.
 
